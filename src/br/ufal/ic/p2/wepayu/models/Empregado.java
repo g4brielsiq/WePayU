@@ -9,7 +9,7 @@ public abstract class Empregado {
 	private String nome;
 	private String endereco;
 	private String tipo;
-	private String metodoPagamento = "em maos";
+	private String metodoPagamento = "emMaos";
 
 	// atributos referente à características "sindicais" de alguns empregados
 	private boolean sindicalizado = false;

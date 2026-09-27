@@ -40,10 +40,10 @@ public class Main {
 				"tests/us4_1.txt",
 				"tests/us5.txt",
 				"tests/us5_1.txt",
-//				"tests/us6.txt",
-//				"tests/us6_1.txt",
-//				"tests/us7.txt",
-//				"tests/us8.txt",
+				"tests/us6.txt",
+				"tests/us6_1.txt",
+				"tests/us7.txt",
+				"tests/us8.txt",
 		});
 	}
 }
