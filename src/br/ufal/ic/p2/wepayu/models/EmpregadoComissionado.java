@@ -7,8 +7,7 @@ public class EmpregadoComissionado extends EmpregadoAssalariado {
 	private double taxaComissao;
 	private ArrayList<ResultadoVenda> resultadoVenda;
 
-	public EmpregadoComissionado(String id, String nome, String endereco, double salarioMensal,
-			double taxaComissao) {
+	public EmpregadoComissionado(String id, String nome, String endereco, double salarioMensal, double taxaComissao) {
 
 		super(id, nome, endereco, salarioMensal);
 
