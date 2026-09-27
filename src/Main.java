@@ -28,8 +28,7 @@ public class Main {
 		// EasyAccept.main(new String[]{facade, "tests/us10.txt"});
 		// EasyAccept.main(new String[]{facade, "tests/us10_1.txt"});
 
-		EasyAccept.main(new String[] {
-				facade,
+		String[] testes = {
 				"tests/us1.txt",
 				"tests/us1_1.txt",
 				"tests/us2.txt",
@@ -44,6 +43,17 @@ public class Main {
 				"tests/us6_1.txt",
 				"tests/us7.txt",
 				"tests/us8.txt",
-		});
+		};
+
+		String[] testesAteUS7 = java.util.Arrays.copyOf(testes, testes.length - 1);
+		EasyAccept.main(concatenar(facade, testesAteUS7));
+		EasyAccept.main(new String[] { facade, testes[testes.length - 1] });
+	}
+
+	private static String[] concatenar(String facade, String[] testes) {
+		String[] argumentos = new String[testes.length + 1];
+		argumentos[0] = facade;
+		System.arraycopy(testes, 0, argumentos, 1, testes.length);
+		return argumentos;
 	}
 }

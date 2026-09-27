@@ -31,61 +31,62 @@ public class Facade {
 	private static class Snapshot {
 		RepositoryEmpregados repo;
 		Map<String, LocalDate> pagamentos;
+		Map<String, LocalDate> ultimoProcessamentoFolha;
 
-		Snapshot(RepositoryEmpregados repo, Map<String, LocalDate> pagamentos) {
+		Snapshot(RepositoryEmpregados repo, Map<String, LocalDate> pagamentos, Map<String, LocalDate> ultimoProcessamentoFolha) {
 			this.repo = repo;
 			this.pagamentos = new HashMap<>(pagamentos);
+			this.ultimoProcessamentoFolha = new HashMap<>(ultimoProcessamentoFolha);
 		}
 	}
 
 	private Stack<Snapshot> historicoUndo = new Stack<>();
 	private Stack<Snapshot> historicoRedo = new Stack<>();
 	private Map<String, LocalDate> ultimoPagamento = new HashMap<>();
+	private Map<String, LocalDate> ultimoProcessamentoFolha = new HashMap<>();
 	private boolean sistemaEncerrado = false;
-	private int operacoesRealizadas = 0;
+	private boolean inicializado = false;
 
 	RepositoryEmpregados listaEmpregados = new RepositoryEmpregados();
 
 	public void zerarSistema() {
-		// Se operacoesRealizadas == 0, eh a chamada de setup do EasyAccept antes de iniciar o script
-		if (operacoesRealizadas == 0) {
-			historicoUndo.clear();
-			historicoRedo.clear();
-		} else {
-			// Chamada explicita do comando zerarSistema dentro do script
-			salvarEstado();
-		}
+		salvarEstado();
 		listaEmpregados.zerarSistema();
 		ultimoPagamento.clear();
+		ultimoProcessamentoFolha.clear();
 		sistemaEncerrado = false;
+		inicializado = true;
 	}
 
 	public void encerrarSistema() {
 		sistemaEncerrado = true;
+		inicializado = false;
 	}
 
 	private void salvarEstado() {
-		historicoUndo.push(new Snapshot(clonarRepositorio(listaEmpregados), ultimoPagamento));
+		historicoUndo.push(new Snapshot(clonarRepositorio(listaEmpregados), ultimoPagamento, ultimoProcessamentoFolha));
 		historicoRedo.clear();
-		operacoesRealizadas++;
+		inicializado = true;
 	}
 
 	public void undo() throws Exception {
 		if (sistemaEncerrado) throw new Exception("Nao pode dar comandos depois de encerrarSistema.");
 		if (historicoUndo.isEmpty()) throw new Exception("Nao ha comando a desfazer.");
-		historicoRedo.push(new Snapshot(clonarRepositorio(listaEmpregados), ultimoPagamento));
+		historicoRedo.push(new Snapshot(clonarRepositorio(listaEmpregados), ultimoPagamento, ultimoProcessamentoFolha));
 		Snapshot anterior = historicoUndo.pop();
 		listaEmpregados = clonarRepositorio(anterior.repo);
 		ultimoPagamento = new HashMap<>(anterior.pagamentos);
+		ultimoProcessamentoFolha = new HashMap<>(anterior.ultimoProcessamentoFolha);
 	}
 
 	public void redo() throws Exception {
 		if (sistemaEncerrado) throw new Exception("Nao pode dar comandos depois de encerrarSistema.");
 		if (historicoRedo.isEmpty()) throw new Exception("Nao ha comando a refazer.");
-		historicoUndo.push(new Snapshot(clonarRepositorio(listaEmpregados), ultimoPagamento));
+		historicoUndo.push(new Snapshot(clonarRepositorio(listaEmpregados), ultimoPagamento, ultimoProcessamentoFolha));
 		Snapshot seguinte = historicoRedo.pop();
 		listaEmpregados = clonarRepositorio(seguinte.repo);
 		ultimoPagamento = new HashMap<>(seguinte.pagamentos);
+		ultimoProcessamentoFolha = new HashMap<>(seguinte.ultimoProcessamentoFolha);
 	}
 
 	private RepositoryEmpregados clonarRepositorio(RepositoryEmpregados original) {
@@ -681,8 +682,11 @@ public class Facade {
 				for (EmpregadoComissionado c : comissionados) {
 					double fixo = truncar((c.getSalarioMensal() * 12.0) / 26.0);
 					double vendas = 0.0;
+					LocalDate ultimoProc = ultimoProcessamentoFolha.get(c.getId());
 					for (ResultadoVenda v : c.getHistoricoVendas()) {
-						if (!v.getData().isAfter(dataFolha)) vendas += v.getValor();
+						if (!v.getData().isAfter(dataFolha) && (ultimoProc == null || v.getData().isAfter(ultimoProc))) {
+							vendas += v.getValor();
+						}
 					}
 					vendas = arredondar(vendas);
 					double comissaoValor = truncar(vendas * c.getTaxaComissao());
@@ -730,17 +734,15 @@ public class Facade {
 			if (bruto > 0) {
 				ultimoPagamento.put(h.getId(), dataFolha);
 			}
-			h.getCartoesDePonto().removeIf(c -> !c.getData().isAfter(dataFolha));
-			h.getTaxasServico().removeIf(t -> !t.getData().isAfter(dataFolha));
+			ultimoProcessamentoFolha.put(h.getId(), dataFolha);
 		}
 		for (EmpregadoComissionado c : comissionados) {
 			ultimoPagamento.put(c.getId(), dataFolha);
-			c.getHistoricoVendas().removeIf(v -> !v.getData().isAfter(dataFolha));
-			c.getTaxasServico().removeIf(t -> !t.getData().isAfter(dataFolha));
+			ultimoProcessamentoFolha.put(c.getId(), dataFolha);
 		}
 		for (EmpregadoAssalariado a : assalariados) {
 			ultimoPagamento.put(a.getId(), dataFolha);
-			a.getTaxasServico().removeIf(t -> !t.getData().isAfter(dataFolha));
+			ultimoProcessamentoFolha.put(a.getId(), dataFolha);
 		}
 	}
 
@@ -804,8 +806,9 @@ public class Facade {
 		double hNormais = 0.0;
 		double hExtras = 0.0;
 		if (emp instanceof EmpregadoHorista) {
+			LocalDate ultimoProc = ultimoProcessamentoFolha.get(emp.getId());
 			for (CartaoDePonto c : ((EmpregadoHorista) emp).getCartoesDePonto()) {
-				if (!c.getData().isAfter(dataFolha)) {
+				if (!c.getData().isAfter(dataFolha) && (ultimoProc == null || c.getData().isAfter(ultimoProc))) {
 					hNormais += Math.min(8.0, c.getHoras());
 					if (c.getHoras() > 8.0) hExtras += (c.getHoras() - 8.0);
 				}
@@ -824,8 +827,11 @@ public class Facade {
 			EmpregadoComissionado c = (EmpregadoComissionado) emp;
 			double fixo = truncar((c.getSalarioMensal() * 12.0) / 26.0);
 			double vendas = 0.0;
+			LocalDate ultimoProc = ultimoProcessamentoFolha.get(c.getId());
 			for (ResultadoVenda v : c.getHistoricoVendas()) {
-				if (!v.getData().isAfter(dataFolha)) vendas += v.getValor();
+				if (!v.getData().isAfter(dataFolha) && (ultimoProc == null || v.getData().isAfter(ultimoProc))) {
+					vendas += v.getValor();
+				}
 			}
 			double comissaoValor = truncar(arredondar(vendas) * c.getTaxaComissao());
 			bruto = fixo + comissaoValor;
@@ -855,8 +861,11 @@ public class Facade {
 				}
 				descontos += (emp.getTaxaSindical() * diasPeriodo);
 			}
+			LocalDate ultimoProc = ultimoProcessamentoFolha.get(emp.getId());
 			for (TaxaServico t : emp.getTaxasServico()) {
-				if (!t.getData().isAfter(dataFolha)) descontos += t.getValor();
+				if (!t.getData().isAfter(dataFolha) && (ultimoProc == null || t.getData().isAfter(ultimoProc))) {
+					descontos += t.getValor();
+				}
 			}
 		}
 		return descontos;
