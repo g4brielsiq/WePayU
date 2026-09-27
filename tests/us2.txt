@@ -34,4 +34,3 @@ expectError "Identificacao do empregado nao pode ser nula." removerEmpregado emp
 expectError "Empregado nao existe." removerEmpregado emp=abc
 
 encerrarSistema
-quit

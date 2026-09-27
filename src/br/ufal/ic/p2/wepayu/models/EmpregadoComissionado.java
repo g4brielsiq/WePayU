@@ -5,17 +5,17 @@ import java.util.ArrayList;
 public class EmpregadoComissionado extends EmpregadoAssalariado {
 
 	private double taxaComissao;
-	private ArrayList<ResultadoVenda> resultadoVenda;
+	private ArrayList<ResultadoVenda> historicoVendas;
 
 	public EmpregadoComissionado(String id, String nome, String endereco, double salarioMensal, double taxaComissao) {
 
 		super(id, nome, endereco, salarioMensal);
 
 		this.setTipo("comissionado");
-		
+
 		this.taxaComissao = taxaComissao;
 
-		this.resultadoVenda = new ArrayList<ResultadoVenda>();
+		this.historicoVendas = new ArrayList<ResultadoVenda>();
 	}
 
 	public double getTaxaComissao() {
@@ -26,11 +26,16 @@ public class EmpregadoComissionado extends EmpregadoAssalariado {
 		this.taxaComissao = taxaComissao;
 	}
 
-	public ArrayList<ResultadoVenda> getResultadoVenda() {
-		return resultadoVenda;
+	public ArrayList<ResultadoVenda> getHistoricoVendas() {
+		return historicoVendas;
 	}
 
-	public void setResultadoVenda(ArrayList<ResultadoVenda> resultadoVenda) {
-		this.resultadoVenda = resultadoVenda;
+	public void setResultadoVenda(ArrayList<ResultadoVenda> historicoVendas) {
+		this.historicoVendas = historicoVendas;
+	}
+
+	public void adicionarVenda(ResultadoVenda venda) {
+
+		this.historicoVendas.add(venda);
 	}
 }

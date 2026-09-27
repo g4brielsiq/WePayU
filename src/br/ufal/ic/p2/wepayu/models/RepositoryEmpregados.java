@@ -40,11 +40,11 @@ public class RepositoryEmpregados {
 	}
 
 	public String gerarIdValido() {
-		
+
 		String idGerado = String.valueOf(this.idValido);
-		
+
 		this.idValido++;
-		
+
 		return idGerado;
 	}
 
@@ -65,4 +65,59 @@ public class RepositoryEmpregados {
 
 		return null;
 	}
+
+	public Empregado buscarEmpregadoPorNome(String nome, int indice) {
+
+		int cont = 0;
+
+		for (int i = 0; i < listaEmpregados.size(); i++) {
+
+			if(listaEmpregados.get(i).getNome().equals(nome)) {
+
+				cont++;
+
+				if(cont == indice) {
+
+					return listaEmpregados.get(i);
+				}
+			}
+		}
+
+		return null;
+	}
+	
+	public void removerEmpregado(Empregado emp) {
+		
+	    listaEmpregados.remove(emp);
+	}
+	
+	public Empregado getEmpregadoPorSindicato(String idSindicato) {
+	    
+	    for (int i = 0; i < listaEmpregados.size(); i++) {
+	        
+	        Empregado emp = listaEmpregados.get(i);
+	        
+	        // Verifica se o empregado está no sindicato e se o ID sindical é igual ao procurado
+	        if (emp.isSindicalizado() && emp.getIdSindicato() != null && emp.getIdSindicato().equals(idSindicato)) {
+	            
+	            return emp;
+	        }
+	    }
+	   
+	    return null;
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

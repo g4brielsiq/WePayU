@@ -53,4 +53,3 @@ expectError "Data final invalida." getHorasNormaisTrabalhadas emp=${id1} dataIni
 expectError "Data inicial nao pode ser posterior aa data final." getHorasNormaisTrabalhadas emp=${id1} dataInicial=2/1/2005 dataFinal=1/1/2005
 
 encerrarSistema
-quit

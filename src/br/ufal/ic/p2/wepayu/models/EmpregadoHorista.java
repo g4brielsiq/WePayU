@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class EmpregadoHorista extends Empregado{
 
 	private double salarioPorHora;
-	private ArrayList<CartaoDePonto> cartaoDePonto;
+	private ArrayList<CartaoDePonto> cartoesDePonto;
 
 	public EmpregadoHorista(String id, String nome, String endereco, double salarioPorHora) {
 	   
@@ -13,7 +13,7 @@ public class EmpregadoHorista extends Empregado{
 	    
 	    this.salarioPorHora = salarioPorHora;
 	    
-	    this.cartaoDePonto = new ArrayList<CartaoDePonto>();
+	    this.cartoesDePonto = new ArrayList<CartaoDePonto>();
 	}
 
 	public double getSalarioPorHora() {
@@ -24,11 +24,16 @@ public class EmpregadoHorista extends Empregado{
 		this.salarioPorHora = salarioPorHora;
 	}
 
-	public ArrayList<CartaoDePonto> getCartaoDePonto() {
-		return cartaoDePonto;
+	public ArrayList<CartaoDePonto> getCartoesDePonto() {
+		return cartoesDePonto;
 	}
 
-	public void setCartaoDePonto(ArrayList<CartaoDePonto> cartaoDePonto) {
-		this.cartaoDePonto = cartaoDePonto;
+	public void setCartoesDePonto(ArrayList<CartaoDePonto> cartoesDePonto) {
+		this.cartoesDePonto = cartoesDePonto;
+	}
+	
+	public void adicionarCartaoDePonto(CartaoDePonto cartao) {
+		
+	    this.cartoesDePonto.add(cartao);
 	}
 }

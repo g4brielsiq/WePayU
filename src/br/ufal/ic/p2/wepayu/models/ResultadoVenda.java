@@ -1,21 +1,23 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.time.LocalDate;
+
 public class ResultadoVenda {
 
-	private String data;
+	private LocalDate data;
 	private double valor;
 
-	public ResultadoVenda(String data, double valor) {
+	public ResultadoVenda(LocalDate data, double valor) {
+		
+        this.data = data;
+        this.valor = valor;
+    }
 
-		this.data = data;
-		this.valor = valor;
+	public LocalDate getData() { 
+		return data; 
 	}
 
-	public String getData() {
-		return data;
-	}
-
-	public void setData(String data) {
+	public void setData(LocalDate data) {
 		this.data = data;
 	}
 

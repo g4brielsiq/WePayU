@@ -1,5 +1,7 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.util.ArrayList;
+
 public abstract class Empregado {
 
 	private String id;
@@ -13,6 +15,9 @@ public abstract class Empregado {
 	private boolean sindicalizado = false;
 	private String idSindicato;
 	private double taxaSindical;
+
+	private ArrayList<TaxaServico> taxasServico = new ArrayList<TaxaServico>();
+	private String banco, agencia, contaCorrente;
 
 	// id deve-se setar automaticamente
 	public Empregado(String id, String nome, String endereco, String tipo) {
@@ -85,5 +90,41 @@ public abstract class Empregado {
 
 	public void setTaxaSindical(double taxaSindical) {
 		this.taxaSindical = taxaSindical;
+	}
+
+	public ArrayList<TaxaServico> getTaxasServico() {
+		return taxasServico;
+	}
+
+	public void setTaxasServico(ArrayList<TaxaServico> taxasServico) {
+		this.taxasServico = taxasServico;
+	}
+
+	public String getBanco() {
+		return banco;
+	}
+
+	public void setBanco(String banco) {
+		this.banco = banco;
+	}
+
+	public String getAgencia() {
+		return agencia;
+	}
+
+	public void setAgencia(String agencia) {
+		this.agencia = agencia;
+	}
+
+	public String getContaCorrente() {
+		return contaCorrente;
+	}
+
+	public void setContaCorrente(String contaCorrente) {
+		this.contaCorrente = contaCorrente;
+	}
+	
+	public void adicionarTaxaServico(TaxaServico taxa) { 
+		this.taxasServico.add(taxa); 
 	}
 }

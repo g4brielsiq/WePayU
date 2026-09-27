@@ -121,4 +121,3 @@ expectError "Taxa sindical deve ser numerica." alteraEmpregado emp=${id1} atribu
 expectError "Taxa sindical deve ser nao-negativa." alteraEmpregado emp=${id1} atributo=sindicalizado valor=true idSindicato=s123 taxaSindical=-1
 
 encerrarSistema
-quit

@@ -86,4 +86,3 @@ expectError "Empregado nao existe." getAtributoEmpregado emp=abc atributo=sindic
 expectError "Atributo nao existe." getAtributoEmpregado emp=${id1} atributo=abc
 
 encerrarSistema
-quit

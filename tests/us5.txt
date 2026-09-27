@@ -49,4 +49,3 @@ expectError "Data inicial nao pode ser posterior aa data final." getTaxasServico
 expectError "Ha outro empregado com esta identificacao de sindicato" alteraEmpregado emp=${id4} atributo=sindicalizado valor=true idSindicato=s129 taxaSindical=1,00
 
 encerrarSistema
-quit

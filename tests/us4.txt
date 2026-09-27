@@ -47,4 +47,3 @@ expectError "Data final invalida." getVendasRealizadas emp=${id1} dataInicial=1/
 expectError "Data inicial nao pode ser posterior aa data final." getVendasRealizadas emp=${id1} dataInicial=2/1/2005 dataFinal=1/1/2005
 
 encerrarSistema
-quit
