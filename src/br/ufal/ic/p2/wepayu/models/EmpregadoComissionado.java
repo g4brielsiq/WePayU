@@ -1,8 +1,9 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class EmpregadoComissionado extends EmpregadoAssalariado {
+public class EmpregadoComissionado extends EmpregadoAssalariado implements Serializable {
 
 	private double taxaComissao;
 	private ArrayList<ResultadoVenda> historicoVendas;

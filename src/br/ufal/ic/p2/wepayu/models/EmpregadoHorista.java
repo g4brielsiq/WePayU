@@ -1,8 +1,9 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class EmpregadoHorista extends Empregado{
+public class EmpregadoHorista extends Empregado implements Serializable {
 
 	private double salarioPorHora;
 	private ArrayList<CartaoDePonto> cartoesDePonto;

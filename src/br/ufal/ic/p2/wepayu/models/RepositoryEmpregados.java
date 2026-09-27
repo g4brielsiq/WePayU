@@ -1,10 +1,11 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RepositoryEmpregados {
+public class RepositoryEmpregados implements Serializable {
 
 	private ArrayList<Empregado> listaEmpregados;
 	private int idValido = 1;

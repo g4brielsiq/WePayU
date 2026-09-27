@@ -1,8 +1,10 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Empregado {
+public abstract class Empregado implements Serializable {
+	
 
 	private String id;
 	
