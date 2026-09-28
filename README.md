@@ -1,4 +1,4 @@
-# WePayU — Sistema de Folha de Pagamento
+# WePayU - Sistema de Folha de Pagamento
 
 Projeto prático desenvolvido para a disciplina **Programação 2 (COMP372)** do curso de Ciência da Computação da **Universidade Federal de Alagoas (UFAL)**, ministrada pelo professor Mário Hozano.
 
@@ -8,11 +8,11 @@ Projeto prático desenvolvido para a disciplina **Programação 2 (COMP372)** do
 
 A disciplina de Programação 2 tem como foco os fundamentos de **Programação Orientada a Objetos (POO)** em Java, abordando temas como qualidade de software, testes de aceitação, boas práticas de modelagem e padrões de projeto.
 
-A proposta deste projeto é praticar construindo, de forma incremental, a lógica de negócio de um sistema de folha de pagamento. O projeto implementa as histórias de usuário US1 a US8, incluindo cadastro de empregados, cartões de ponto, vendas, sindicato, processamento de pagamentos e undo/redo.
+A proposta deste projeto é praticar construindo, de forma incremental, a lógica de negócio de um sistema de folha de pagamento. O projeto implementa as User stories US1 a US8, incluindo cadastro de empregados, cartões de ponto, vendas, sindicato, processamento de pagamentos e undo/redo.
 
-Os testes de aceitação são executados pelo EasyAccept e acessam o sistema por meio da classe `br.ufal.ic.p2.wepayu.Facade`. Por esse motivo, a `Facade` e os nomes/assinaturas de seus comandos públicos são mantidos como ponto de entrada para os testes.
+Os testes de aceitação são executados pelo EasyAccept e acessam o sistema por meio da classe `br.ufal.ic.p2.wepayu.Facade`. Por esse motivo, a `Facade` e os nomes/assinaturas de seus métodos e comandos são mantidos como ponto de entrada para os testes.
 
-O desenvolvimento do **WePayU** foi proposto como um projeto *hands-on* incremental ao longo do período. O objetivo principal foi aplicar os pilares teóricos discutidos em sala de aula na solução de um problema com regras de negócio densas e dependências temporais:
+O objetivo principal foi aplicar os pilares teóricos discutidos em sala de aula na solução de um problema com regras de negócio densas e dependências temporais:
 
 1. **Abstração e Modelagem do Mundo Real:** Representação das diferentes modalidades de contratação de uma empresa em classes e métodos com responsabilidades bem definidas.
 2. **Encapsulamento e Estado Consistente:** Proteção dos atributos internos das entidades, garantindo que mutações e cálculos obedeçam estritamente às regras do domínio.
@@ -25,7 +25,7 @@ O desenvolvimento do **WePayU** foi proposto como um projeto *hands-on* incremen
 
 ## Escopo Implementado (US1 a US8)
 
-O sistema cobre o ciclo de vida completo de administração e remuneração de pessoal:
+O sistema cobre o ciclo de vida completo de administração e remuneração de pessoas:
 
 - **US1 & US1.1 — Gestão de Empregados:** Criação, recuperação de atributos e remoção de empregados dos tipos horista, assalariado e comissionado.
 - **US2 & US2.1 — Cartões de Ponto:** Registro diário de horas trabalhadas para empregados horistas, com segregação entre horas normais (até 8h) e horas extras com adicional de 50%.
