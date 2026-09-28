@@ -12,10 +12,6 @@ import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
 import br.ufal.ic.p2.wepayu.entidades.ResultadoVenda;
 import br.ufal.ic.p2.wepayu.entidades.TaxaServico;
 
-/**
- * Reúne os casos de uso relacionados ao cadastro e aos dados dos empregados.
- * A Facade mantém os nomes dos comandos exigidos pelo EasyAccept e delega para cá.
- */
 public class ServicoEmpregados {
 	private final RepositoryEmpregados empregados;
 	private final Runnable registrarAlteracao;
