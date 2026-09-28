@@ -20,4 +20,11 @@ public class EmpregadoAssalariado extends Empregado implements Serializable {
 	public void setSalarioMensal(double salarioMensal) {
 		this.salarioMensal = salarioMensal;
 	}
+
+	@Override
+	public EmpregadoAssalariado copia() {
+		EmpregadoAssalariado copia = new EmpregadoAssalariado(getId(), getNome(), getEndereco(), salarioMensal);
+		copiarAtributosPara(copia);
+		return copia;
+	}
 }

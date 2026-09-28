@@ -39,4 +39,15 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 
 		this.historicoVendas.add(venda);
 	}
+
+	@Override
+	public EmpregadoComissionado copia() {
+		EmpregadoComissionado copia = new EmpregadoComissionado(
+				getId(), getNome(), getEndereco(), getSalarioMensal(), taxaComissao);
+		copiarAtributosPara(copia);
+		for (ResultadoVenda venda : historicoVendas) {
+			copia.adicionarVenda(new ResultadoVenda(venda.getData(), venda.getValor()));
+		}
+		return copia;
+	}
 }

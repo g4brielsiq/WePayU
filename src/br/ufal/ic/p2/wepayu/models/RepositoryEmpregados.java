@@ -2,8 +2,8 @@ package br.ufal.ic.p2.wepayu.models;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.List;
 
 public class RepositoryEmpregados implements Serializable {
 
@@ -15,12 +15,12 @@ public class RepositoryEmpregados implements Serializable {
 		this.listaEmpregados = new ArrayList<Empregado>();
 	}
 
-	public ArrayList<Empregado> getListaEmpregados() {
-		return listaEmpregados;
+	public List<Empregado> getListaEmpregados() {
+		return Collections.unmodifiableList(listaEmpregados);
 	}
 
-	public void setListaEmpregados(ArrayList<Empregado> listaEmpregados) {
-		this.listaEmpregados = listaEmpregados;
+	public int getNumeroDeEmpregados() {
+		return listaEmpregados.size();
 	}
 
 	public int getIdValido() {
@@ -39,6 +39,16 @@ public class RepositoryEmpregados implements Serializable {
 	public void encerrarSistema() {
 		// Apenas para não dar erro de "Unknown command" no final dos testes
 	}
+
+	public RepositoryEmpregados copia() {
+		RepositoryEmpregados clone = new RepositoryEmpregados();
+		clone.setIdValido(idValido);
+		for (Empregado empregado : listaEmpregados) {
+			clone.adicionarEmpregado(empregado.copia());
+		}
+		return clone;
+	}
+
 
 	public String gerarIdValido() {
 

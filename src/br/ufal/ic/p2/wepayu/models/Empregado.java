@@ -129,4 +129,20 @@ public abstract class Empregado implements Serializable {
 	public void adicionarTaxaServico(TaxaServico taxa) { 
 		this.taxasServico.add(taxa); 
 	}
+
+	public abstract Empregado copia();
+
+	protected void copiarAtributosPara(Empregado destino) {
+		destino.setMetodoPagamento(metodoPagamento);
+		destino.setSindicalizado(sindicalizado);
+		destino.setIdSindicato(idSindicato);
+		destino.setTaxaSindical(taxaSindical);
+		destino.setBanco(banco);
+		destino.setAgencia(agencia);
+		destino.setContaCorrente(contaCorrente);
+
+		for (TaxaServico taxa : taxasServico) {
+			destino.adicionarTaxaServico(new TaxaServico(taxa.getData(), taxa.getValor()));
+		}
+	}
 }

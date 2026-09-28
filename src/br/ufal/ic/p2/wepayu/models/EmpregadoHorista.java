@@ -37,4 +37,14 @@ public class EmpregadoHorista extends Empregado implements Serializable {
 		
 	    this.cartoesDePonto.add(cartao);
 	}
+
+	@Override
+	public EmpregadoHorista copia() {
+		EmpregadoHorista copia = new EmpregadoHorista(getId(), getNome(), getEndereco(), salarioPorHora);
+		copiarAtributosPara(copia);
+		for (CartaoDePonto cartao : cartoesDePonto) {
+			copia.adicionarCartaoDePonto(new CartaoDePonto(cartao.getData(), cartao.getHoras()));
+		}
+		return copia;
+	}
 }
