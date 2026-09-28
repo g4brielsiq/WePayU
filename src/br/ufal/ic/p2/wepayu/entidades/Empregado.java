@@ -1,9 +1,10 @@
 package br.ufal.ic.p2.wepayu.entidades;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.time.LocalDate;
 import java.util.List;
+
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryTaxasServico;
 
 public abstract class Empregado implements Serializable {
 	
@@ -20,7 +21,7 @@ public abstract class Empregado implements Serializable {
 	private String idSindicato;
 	private double taxaSindical;
 
-	private ArrayList<TaxaServico> taxasServico = new ArrayList<TaxaServico>();
+	private RepositoryTaxasServico taxasServico = new RepositoryTaxasServico();
 	private String banco, agencia, contaCorrente;
 
 	// id deve-se setar automaticamente
@@ -97,7 +98,7 @@ public abstract class Empregado implements Serializable {
 	}
 
 	public List<TaxaServico> getTaxasServico() {
-		return Collections.unmodifiableList(taxasServico);
+		return taxasServico.getTaxas();
 	}
 
 	public String getBanco() {
@@ -124,8 +125,12 @@ public abstract class Empregado implements Serializable {
 		this.contaCorrente = contaCorrente;
 	}
 	
-	public void adicionarTaxaServico(TaxaServico taxa) { 
-		this.taxasServico.add(taxa); 
+	public void adicionarTaxaServico(TaxaServico taxa) {
+		taxasServico.adicionar(taxa);
+	}
+
+	public double totalTaxasServicoEntre(LocalDate inicio, LocalDate fim) {
+		return taxasServico.totalEntre(inicio, fim);
 	}
 
 	public abstract Empregado copia();
@@ -139,8 +144,6 @@ public abstract class Empregado implements Serializable {
 		destino.setAgencia(agencia);
 		destino.setContaCorrente(contaCorrente);
 
-		for (TaxaServico taxa : taxasServico) {
-			destino.adicionarTaxaServico(new TaxaServico(taxa.getData(), taxa.getValor()));
-		}
+		destino.taxasServico = taxasServico.copia();
 	}
 }

@@ -156,12 +156,7 @@ public class ServicoEmpregados {
 		LocalDate fim = converterData(dataFinal, "Data final invalida.");
 		if (inicio.isAfter(fim)) throw new Exception("Data inicial nao pode ser posterior aa data final.");
 
-		double horasNormais = 0;
-		for (CartaoDePonto cartao : ((EmpregadoHorista) emp).getCartoesDePonto()) {
-			if (!cartao.getData().isBefore(inicio) && cartao.getData().isBefore(fim)) {
-				horasNormais += Math.min(8.0, cartao.getHoras());
-			}
-		}
+		double horasNormais = ((EmpregadoHorista) emp).totalHorasNormaisEntre(inicio, fim);
 		return formatarHoras(horasNormais);
 	}
 
@@ -174,12 +169,7 @@ public class ServicoEmpregados {
 		LocalDate fim = converterData(dataFinal, "Data final invalida.");
 		if (inicio.isAfter(fim)) throw new Exception("Data inicial nao pode ser posterior aa data final.");
 
-		double horasExtras = 0;
-		for (CartaoDePonto cartao : ((EmpregadoHorista) emp).getCartoesDePonto()) {
-			if (!cartao.getData().isBefore(inicio) && cartao.getData().isBefore(fim)) {
-				if (cartao.getHoras() > 8.0) horasExtras += (cartao.getHoras() - 8.0);
-			}
-		}
+		double horasExtras = ((EmpregadoHorista) emp).totalHorasExtrasEntre(inicio, fim);
 		return formatarHoras(horasExtras);
 	}
 
@@ -209,12 +199,7 @@ public class ServicoEmpregados {
 		LocalDate fim = converterData(dataFinal, "Data final invalida.");
 		if (inicio.isAfter(fim)) throw new Exception("Data inicial nao pode ser posterior aa data final.");
 
-		double totalVendas = 0;
-		for (ResultadoVenda venda : ((EmpregadoComissionado) emp).getHistoricoVendas()) {
-			if (!venda.getData().isBefore(inicio) && venda.getData().isBefore(fim)) {
-				totalVendas += venda.getValor();
-			}
-		}
+		double totalVendas = ((EmpregadoComissionado) emp).totalVendasEntre(inicio, fim);
 		return formatarMonetario(totalVendas);
 	}
 
@@ -243,12 +228,7 @@ public class ServicoEmpregados {
 		LocalDate fim = converterData(dataFinal, "Data final invalida.");
 		if (inicio.isAfter(fim)) throw new Exception("Data inicial nao pode ser posterior aa data final.");
 
-		double totalTaxas = 0;
-		for (TaxaServico taxa : emp.getTaxasServico()) {
-			if (!taxa.getData().isBefore(inicio) && taxa.getData().isBefore(fim)) {
-				totalTaxas += taxa.getValor();
-			}
-		}
+		double totalTaxas = emp.totalTaxasServicoEntre(inicio, fim);
 		return formatarMonetario(totalTaxas);
 	}
 

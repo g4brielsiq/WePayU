@@ -12,9 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import br.ufal.ic.p2.wepayu.entidades.CartaoDePonto;
 import br.ufal.ic.p2.wepayu.entidades.Empregado;
@@ -22,25 +20,23 @@ import br.ufal.ic.p2.wepayu.entidades.EmpregadoAssalariado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoComissionado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoHorista;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryPagamentos;
 import br.ufal.ic.p2.wepayu.entidades.ResultadoVenda;
 import br.ufal.ic.p2.wepayu.entidades.TaxaServico;
 
 public class ProcessadorFolhaPagamento {
 
-	private Map<String, LocalDate> ultimoPagamento = new HashMap<>();
-	private Map<String, LocalDate> ultimoProcessamentoFolha = new HashMap<>();
+	private RepositoryPagamentos historicoPagamentos = new RepositoryPagamentos();
 
 	public ProcessadorFolhaPagamento() {
 	}
 
 	public ProcessadorFolhaPagamento(ProcessadorFolhaPagamento outro) {
-		this.ultimoPagamento = new HashMap<>(outro.ultimoPagamento);
-		this.ultimoProcessamentoFolha = new HashMap<>(outro.ultimoProcessamentoFolha);
+		this.historicoPagamentos = outro.historicoPagamentos.copia();
 	}
 
 	public void zerar() {
-		ultimoPagamento.clear();
-		ultimoProcessamentoFolha.clear();
+		historicoPagamentos.zerar();
 	}
 
 	public String totalFolha(RepositoryEmpregados empregados, String data) throws Exception {
@@ -182,7 +178,7 @@ public class ProcessadorFolhaPagamento {
 				for (EmpregadoComissionado c : comissionados) {
 					double fixo = truncar((c.getSalarioMensal() * 12.0) / 26.0);
 					double vendas = 0.0;
-					LocalDate ultimoProc = ultimoProcessamentoFolha.get(c.getId());
+					LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(c.getId());
 					for (ResultadoVenda v : c.getHistoricoVendas()) {
 						if (!v.getData().isAfter(dataFolha) && (ultimoProc == null || v.getData().isAfter(ultimoProc))) {
 							vendas += v.getValor();
@@ -231,18 +227,13 @@ public class ProcessadorFolhaPagamento {
 
 		for (EmpregadoHorista h : horistas) {
 			double bruto = calcularSalarioBruto(h, dataFolha);
-			if (bruto > 0) {
-				ultimoPagamento.put(h.getId(), dataFolha);
-			}
-			ultimoProcessamentoFolha.put(h.getId(), dataFolha);
+			historicoPagamentos.registrarProcessamento(h.getId(), dataFolha, bruto > 0);
 		}
 		for (EmpregadoComissionado c : comissionados) {
-			ultimoPagamento.put(c.getId(), dataFolha);
-			ultimoProcessamentoFolha.put(c.getId(), dataFolha);
+			historicoPagamentos.registrarProcessamento(c.getId(), dataFolha, true);
 		}
 		for (EmpregadoAssalariado a : assalariados) {
-			ultimoPagamento.put(a.getId(), dataFolha);
-			ultimoProcessamentoFolha.put(a.getId(), dataFolha);
+			historicoPagamentos.registrarProcessamento(a.getId(), dataFolha, true);
 		}
 	}
 
@@ -306,7 +297,7 @@ public class ProcessadorFolhaPagamento {
 		double hNormais = 0.0;
 		double hExtras = 0.0;
 		if (emp instanceof EmpregadoHorista) {
-			LocalDate ultimoProc = ultimoProcessamentoFolha.get(emp.getId());
+			LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(emp.getId());
 			for (CartaoDePonto c : ((EmpregadoHorista) emp).getCartoesDePonto()) {
 				if (!c.getData().isAfter(dataFolha) && (ultimoProc == null || c.getData().isAfter(ultimoProc))) {
 					hNormais += Math.min(8.0, c.getHoras());
@@ -327,7 +318,7 @@ public class ProcessadorFolhaPagamento {
 			EmpregadoComissionado c = (EmpregadoComissionado) emp;
 			double fixo = truncar((c.getSalarioMensal() * 12.0) / 26.0);
 			double vendas = 0.0;
-			LocalDate ultimoProc = ultimoProcessamentoFolha.get(c.getId());
+			LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(c.getId());
 			for (ResultadoVenda v : c.getHistoricoVendas()) {
 				if (!v.getData().isAfter(dataFolha) && (ultimoProc == null || v.getData().isAfter(ultimoProc))) {
 					vendas += v.getValor();
@@ -348,7 +339,7 @@ public class ProcessadorFolhaPagamento {
 			if (bruto > 0) {
 				long diasPeriodo;
 				if (emp instanceof EmpregadoHorista) {
-					LocalDate ultimo = ultimoPagamento.get(emp.getId());
+					LocalDate ultimo = historicoPagamentos.getUltimoPagamento(emp.getId());
 					if (ultimo != null) {
 						diasPeriodo = ChronoUnit.DAYS.between(ultimo, dataFolha);
 					} else {
@@ -361,7 +352,7 @@ public class ProcessadorFolhaPagamento {
 				}
 				descontos += (emp.getTaxaSindical() * diasPeriodo);
 			}
-			LocalDate ultimoProc = ultimoProcessamentoFolha.get(emp.getId());
+			LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(emp.getId());
 			for (TaxaServico t : emp.getTaxasServico()) {
 				if (!t.getData().isAfter(dataFolha) && (ultimoProc == null || t.getData().isAfter(ultimoProc))) {
 					descontos += t.getValor();

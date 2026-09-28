@@ -1,14 +1,15 @@
 package br.ufal.ic.p2.wepayu.entidades;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.time.LocalDate;
 import java.util.List;
+
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryVendas;
 
 public class EmpregadoComissionado extends EmpregadoAssalariado implements Serializable {
 
 	private double taxaComissao;
-	private ArrayList<ResultadoVenda> historicoVendas;
+	private RepositoryVendas historicoVendas;
 
 	public EmpregadoComissionado(String id, String nome, String endereco, double salarioMensal, double taxaComissao) {
 
@@ -18,7 +19,7 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 
 		this.taxaComissao = taxaComissao;
 
-		this.historicoVendas = new ArrayList<ResultadoVenda>();
+		this.historicoVendas = new RepositoryVendas();
 	}
 
 	public double getTaxaComissao() {
@@ -30,12 +31,15 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 	}
 
 	public List<ResultadoVenda> getHistoricoVendas() {
-		return Collections.unmodifiableList(historicoVendas);
+		return historicoVendas.getVendas();
 	}
 
 	public void adicionarVenda(ResultadoVenda venda) {
+		historicoVendas.adicionar(venda);
+	}
 
-		this.historicoVendas.add(venda);
+	public double totalVendasEntre(LocalDate inicio, LocalDate fim) {
+		return historicoVendas.totalEntre(inicio, fim);
 	}
 
 	@Override
@@ -43,9 +47,7 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 		EmpregadoComissionado copia = new EmpregadoComissionado(
 				getId(), getNome(), getEndereco(), getSalarioMensal(), taxaComissao);
 		copiarAtributosPara(copia);
-		for (ResultadoVenda venda : historicoVendas) {
-			copia.adicionarVenda(new ResultadoVenda(venda.getData(), venda.getValor()));
-		}
+		copia.historicoVendas = historicoVendas.copia();
 		return copia;
 	}
 }

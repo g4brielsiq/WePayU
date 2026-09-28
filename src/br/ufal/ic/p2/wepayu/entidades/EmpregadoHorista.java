@@ -1,14 +1,15 @@
 package br.ufal.ic.p2.wepayu.entidades;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.time.LocalDate;
 import java.util.List;
+
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryCartoesDePonto;
 
 public class EmpregadoHorista extends Empregado implements Serializable {
 
 	private double salarioPorHora;
-	private ArrayList<CartaoDePonto> cartoesDePonto;
+	private RepositoryCartoesDePonto cartoesDePonto;
 
 	public EmpregadoHorista(String id, String nome, String endereco, double salarioPorHora) {
 	   
@@ -16,7 +17,7 @@ public class EmpregadoHorista extends Empregado implements Serializable {
 	    
 	    this.salarioPorHora = salarioPorHora;
 	    
-	    this.cartoesDePonto = new ArrayList<CartaoDePonto>();
+	    this.cartoesDePonto = new RepositoryCartoesDePonto();
 	}
 
 	public double getSalarioPorHora() {
@@ -28,21 +29,26 @@ public class EmpregadoHorista extends Empregado implements Serializable {
 	}
 
 	public List<CartaoDePonto> getCartoesDePonto() {
-		return Collections.unmodifiableList(cartoesDePonto);
+		return cartoesDePonto.getCartoes();
 	}
 	
 	public void adicionarCartaoDePonto(CartaoDePonto cartao) {
-		
-	    this.cartoesDePonto.add(cartao);
+		cartoesDePonto.adicionar(cartao);
+	}
+
+	public double totalHorasNormaisEntre(LocalDate inicio, LocalDate fim) {
+		return cartoesDePonto.totalHorasNormais(inicio, fim);
+	}
+
+	public double totalHorasExtrasEntre(LocalDate inicio, LocalDate fim) {
+		return cartoesDePonto.totalHorasExtras(inicio, fim);
 	}
 
 	@Override
 	public EmpregadoHorista copia() {
 		EmpregadoHorista copia = new EmpregadoHorista(getId(), getNome(), getEndereco(), salarioPorHora);
 		copiarAtributosPara(copia);
-		for (CartaoDePonto cartao : cartoesDePonto) {
-			copia.adicionarCartaoDePonto(new CartaoDePonto(cartao.getData(), cartao.getHoras()));
-		}
+		copia.cartoesDePonto = cartoesDePonto.copia();
 		return copia;
 	}
 }

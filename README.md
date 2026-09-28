@@ -56,7 +56,11 @@ src/
     │   ├── ResultadoVenda.java
     │   └── TaxaServico.java
     ├── repositorio/
-    │   └── RepositoryEmpregados.java      (Gerenciamento da coleção)
+    │   ├── RepositoryEmpregados.java      (Empregados)
+    │   ├── RepositoryCartoesDePonto.java  (Cartões)
+    │   ├── RepositoryVendas.java           (Vendas)
+    │   ├── RepositoryTaxasServico.java     (Taxas sindicais extras)
+    │   └── RepositoryPagamentos.java       (Datas de processamento)
     ├── servicos/
     │   ├── ServicoEmpregados.java         (Regras de validação e cadastros)
     │   └── ProcessadorFolhaPagamento.java (Cálculos de proventos, descontos e datas)
@@ -69,15 +73,15 @@ src/
 
 ### `entidades`
 
-Contém `Empregado` e os tipos `EmpregadoHorista`, `EmpregadoAssalariado` e `EmpregadoComissionado`, além de `CartaoDePonto`, `ResultadoVenda` e `TaxaServico`. As entidades guardam seus próprios dados e oferecem operações simples para alterá-los. Cada subtipo de empregado sabe produzir uma cópia dos seus dados, usada pelo histórico.
+Contém `Empregado` e os tipos `EmpregadoHorista`, `EmpregadoAssalariado` e `EmpregadoComissionado`, além de `CartaoDePonto`, `ResultadoVenda` e `TaxaServico`. As entidades guardam seus próprios dados cadastrais e usam os repositórios adequados para suas coleções associadas: o empregado sindicalizado mantém um repositório de taxas, o horista mantém um de cartões, e o comissionado mantém um de vendas. Cada subtipo sabe produzir uma cópia dos seus dados e dessas coleções, usada pelo histórico.
 
 ### `repositorio`
 
-`RepositoryEmpregados` é responsável pela coleção de empregados: gera identificadores, localiza por ID/nome/sindicato, adiciona e remove elementos e cria uma cópia do conjunto. Assim, a `Facade` não precisa manipular diretamente a estrutura da coleção.
+Os repositórios mantêm coleções com `ArrayList` e oferecem operações de inclusão, consulta e cópia. `RepositoryEmpregados` cuida do cadastro e da busca de empregados. `RepositoryCartoesDePonto`, `RepositoryVendas` e `RepositoryTaxasServico` guardam os lançamentos associados aos empregados e somam valores por período. `RepositoryPagamentos` guarda a última data de pagamento e de processamento de cada empregado. A escolha de listas mantém a implementação didática: as buscas percorrem os elementos em sequência, sem depender de `Map`/`HashMap`.
 
 ### `servicos`
 
-`ServicoEmpregados` concentra validações e operações de cadastro e consulta relacionadas aos empregados, como lançar cartões, vendas e taxas de serviço. `ProcessadorFolhaPagamento` concentra as regras de calendário, cálculo e geração da folha. A divisão evita misturar essas regras com o adaptador dos testes.
+`ServicoEmpregados` concentra as regras de negócio de cadastro e consulta, como lançar cartões, vendas e taxas de serviço. A `Facade` faz verificações iniciais de campos obrigatórios, por estar na fronteira dos comandos, e encaminha as demais regras ao serviço. `ProcessadorFolhaPagamento` concentra as regras de calendário, cálculo e geração da folha; seu estado auxiliar fica em `RepositoryPagamentos`.
 
 ### `excecoes`
 
