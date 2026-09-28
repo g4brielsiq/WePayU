@@ -1,7 +1,9 @@
-package br.ufal.ic.p2.wepayu.models;
+package br.ufal.ic.p2.wepayu.entidades;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class EmpregadoComissionado extends EmpregadoAssalariado implements Serializable {
 
@@ -27,12 +29,8 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 		this.taxaComissao = taxaComissao;
 	}
 
-	public ArrayList<ResultadoVenda> getHistoricoVendas() {
-		return historicoVendas;
-	}
-
-	public void setResultadoVenda(ArrayList<ResultadoVenda> historicoVendas) {
-		this.historicoVendas = historicoVendas;
+	public List<ResultadoVenda> getHistoricoVendas() {
+		return Collections.unmodifiableList(historicoVendas);
 	}
 
 	public void adicionarVenda(ResultadoVenda venda) {

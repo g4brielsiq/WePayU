@@ -1,4 +1,4 @@
-package br.ufal.ic.p2.wepayu;
+package br.ufal.ic.p2.wepayu.servicos;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -16,14 +16,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import br.ufal.ic.p2.wepayu.models.CartaoDePonto;
-import br.ufal.ic.p2.wepayu.models.Empregado;
-import br.ufal.ic.p2.wepayu.models.EmpregadoAssalariado;
-import br.ufal.ic.p2.wepayu.models.EmpregadoComissionado;
-import br.ufal.ic.p2.wepayu.models.EmpregadoHorista;
-import br.ufal.ic.p2.wepayu.models.RepositoryEmpregados;
-import br.ufal.ic.p2.wepayu.models.ResultadoVenda;
-import br.ufal.ic.p2.wepayu.models.TaxaServico;
+import br.ufal.ic.p2.wepayu.entidades.CartaoDePonto;
+import br.ufal.ic.p2.wepayu.entidades.Empregado;
+import br.ufal.ic.p2.wepayu.entidades.EmpregadoAssalariado;
+import br.ufal.ic.p2.wepayu.entidades.EmpregadoComissionado;
+import br.ufal.ic.p2.wepayu.entidades.EmpregadoHorista;
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
+import br.ufal.ic.p2.wepayu.entidades.ResultadoVenda;
+import br.ufal.ic.p2.wepayu.entidades.TaxaServico;
 
 public class ProcessadorFolhaPagamento {
 

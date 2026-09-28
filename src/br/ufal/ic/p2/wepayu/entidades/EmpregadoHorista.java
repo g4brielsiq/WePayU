@@ -1,7 +1,9 @@
-package br.ufal.ic.p2.wepayu.models;
+package br.ufal.ic.p2.wepayu.entidades;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class EmpregadoHorista extends Empregado implements Serializable {
 
@@ -25,12 +27,8 @@ public class EmpregadoHorista extends Empregado implements Serializable {
 		this.salarioPorHora = salarioPorHora;
 	}
 
-	public ArrayList<CartaoDePonto> getCartoesDePonto() {
-		return cartoesDePonto;
-	}
-
-	public void setCartoesDePonto(ArrayList<CartaoDePonto> cartoesDePonto) {
-		this.cartoesDePonto = cartoesDePonto;
+	public List<CartaoDePonto> getCartoesDePonto() {
+		return Collections.unmodifiableList(cartoesDePonto);
 	}
 	
 	public void adicionarCartaoDePonto(CartaoDePonto cartao) {

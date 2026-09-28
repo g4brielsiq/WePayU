@@ -1,4 +1,4 @@
-package br.ufal.ic.p2.wepayu.Exception;
+package br.ufal.ic.p2.wepayu.excecoes;
 
 public class EmpregadoNaoExisteException extends Exception{
     public EmpregadoNaoExisteException(){

@@ -1,7 +1,9 @@
-package br.ufal.ic.p2.wepayu.models;
+package br.ufal.ic.p2.wepayu.entidades;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class Empregado implements Serializable {
 	
@@ -94,12 +96,8 @@ public abstract class Empregado implements Serializable {
 		this.taxaSindical = taxaSindical;
 	}
 
-	public ArrayList<TaxaServico> getTaxasServico() {
-		return taxasServico;
-	}
-
-	public void setTaxasServico(ArrayList<TaxaServico> taxasServico) {
-		this.taxasServico = taxasServico;
+	public List<TaxaServico> getTaxasServico() {
+		return Collections.unmodifiableList(taxasServico);
 	}
 
 	public String getBanco() {

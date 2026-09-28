@@ -1,4 +1,6 @@
-package br.ufal.ic.p2.wepayu.models;
+package br.ufal.ic.p2.wepayu.repositorio;
+
+import br.ufal.ic.p2.wepayu.entidades.Empregado;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -23,26 +25,14 @@ public class RepositoryEmpregados implements Serializable {
 		return listaEmpregados.size();
 	}
 
-	public int getIdValido() {
-		return idValido;
-	}
-
-	public void setIdValido(int idValido) {
-		this.idValido = idValido;
-	}
-
 	public void zerarSistema() {
 
 		listaEmpregados.clear();
 	}
 
-	public void encerrarSistema() {
-		// Apenas para não dar erro de "Unknown command" no final dos testes
-	}
-
 	public RepositoryEmpregados copia() {
 		RepositoryEmpregados clone = new RepositoryEmpregados();
-		clone.setIdValido(idValido);
+		clone.idValido = idValido;
 		for (Empregado empregado : listaEmpregados) {
 			clone.adicionarEmpregado(empregado.copia());
 		}
