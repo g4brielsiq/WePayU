@@ -8,9 +8,11 @@ import java.util.List;
 
 import br.ufal.ic.p2.wepayu.entidades.CartaoDePonto;
 
-/** Guarda e consulta os cartões de ponto de um empregado horista. */
 public class RepositoryCartoesDePonto implements Serializable {
 	private final ArrayList<CartaoDePonto> cartoes = new ArrayList<>();
+
+	public RepositoryCartoesDePonto() {
+	}
 
 	public void adicionar(CartaoDePonto cartao) {
 		cartoes.add(cartao);
@@ -18,6 +20,17 @@ public class RepositoryCartoesDePonto implements Serializable {
 
 	public List<CartaoDePonto> getCartoes() {
 		return Collections.unmodifiableList(cartoes);
+	}
+
+	public ArrayList<CartaoDePonto> getCartoesLista() {
+		return cartoes;
+	}
+
+	public void setCartoesLista(ArrayList<CartaoDePonto> lista) {
+		this.cartoes.clear();
+		if (lista != null) {
+			this.cartoes.addAll(lista);
+		}
 	}
 
 	public double totalHorasNormais(LocalDate inicio, LocalDate fim) {

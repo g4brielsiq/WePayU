@@ -8,9 +8,11 @@ import java.util.List;
 
 import br.ufal.ic.p2.wepayu.entidades.ResultadoVenda;
 
-/** Guarda as vendas de um empregado comissionado e soma valores por período. */
 public class RepositoryVendas implements Serializable {
 	private final ArrayList<ResultadoVenda> vendas = new ArrayList<>();
+
+	public RepositoryVendas() {
+	}
 
 	public void adicionar(ResultadoVenda venda) {
 		vendas.add(venda);
@@ -18,6 +20,17 @@ public class RepositoryVendas implements Serializable {
 
 	public List<ResultadoVenda> getVendas() {
 		return Collections.unmodifiableList(vendas);
+	}
+
+	public ArrayList<ResultadoVenda> getVendasLista() {
+		return vendas;
+	}
+
+	public void setVendasLista(ArrayList<ResultadoVenda> lista) {
+		this.vendas.clear();
+		if (lista != null) {
+			this.vendas.addAll(lista);
+		}
 	}
 
 	public double totalEntre(LocalDate inicio, LocalDate fim) {

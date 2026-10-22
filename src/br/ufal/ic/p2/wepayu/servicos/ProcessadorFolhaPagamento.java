@@ -19,10 +19,12 @@ import br.ufal.ic.p2.wepayu.entidades.Empregado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoAssalariado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoComissionado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoHorista;
-import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
-import br.ufal.ic.p2.wepayu.repositorio.RepositoryPagamentos;
 import br.ufal.ic.p2.wepayu.entidades.ResultadoVenda;
 import br.ufal.ic.p2.wepayu.entidades.TaxaServico;
+import br.ufal.ic.p2.wepayu.excecoes.FolhaException;
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryAgendas;
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryPagamentos;
 
 public class ProcessadorFolhaPagamento {
 
@@ -37,6 +39,14 @@ public class ProcessadorFolhaPagamento {
 
 	public void zerar() {
 		historicoPagamentos.zerar();
+	}
+
+	public RepositoryPagamentos getHistoricoPagamentos() {
+		return historicoPagamentos;
+	}
+
+	public void setHistoricoPagamentos(RepositoryPagamentos historicoPagamentos) {
+		this.historicoPagamentos = historicoPagamentos != null ? historicoPagamentos : new RepositoryPagamentos();
 	}
 
 	public String totalFolha(RepositoryEmpregados empregados, String data) throws Exception {
@@ -176,11 +186,11 @@ public class ProcessadorFolhaPagamento {
 				double totalLiqCom = 0.0;
 
 				for (EmpregadoComissionado c : comissionados) {
-					double fixo = truncar((c.getSalarioMensal() * 12.0) / 26.0);
+					double fixo = calcularSalarioFixo(c);
 					double vendas = 0.0;
-					LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(c.getId());
+					LocalDate inicioPeriodo = obterDataInicioPeriodo(c, dataFolha);
 					for (ResultadoVenda v : c.getHistoricoVendas()) {
-						if (!v.getData().isAfter(dataFolha) && (ultimoProc == null || v.getData().isAfter(ultimoProc))) {
+						if (!v.getData().isAfter(dataFolha) && v.getData().isAfter(inicioPeriodo)) {
 							vendas += v.getValor();
 						}
 					}
@@ -222,7 +232,7 @@ public class ProcessadorFolhaPagamento {
 				writer.print("TOTAL FOLHA: " + formatarMonetario(totalGeralBruto));
 			}
 		} catch (Exception e) {
-			throw new Exception("Erro ao gerar folha.");
+			throw new FolhaException("Erro ao gerar folha.", e);
 		}
 
 		for (EmpregadoHorista h : horistas) {
@@ -268,44 +278,63 @@ public class ProcessadorFolhaPagamento {
 		return String.format("%.2f", valor).replace(".", ",");
 	}
 
-	private String formatarHoras(double valor) {
-		if (valor % 1 == 0) return String.valueOf((long) valor);
-		String formatado = String.valueOf(valor).replace(".", ",");
-		if (formatado.endsWith(",0")) return formatado.substring(0, formatado.length() - 2);
-		return formatado;
+	private boolean isDiaDePagamento(Empregado emp, LocalDate data) {
+		return RepositoryAgendas.isDiaDePagamento(emp.getAgendaPagamento(), data);
 	}
 
-	private boolean isDiaDePagamento(Empregado emp, LocalDate data) {
-		String tipo = emp.getTipo();
-		if (tipo.equals("assalariado")) {
-			LocalDate ultimoDia = data.with(TemporalAdjusters.lastDayOfMonth());
-			while (ultimoDia.getDayOfWeek() == DayOfWeek.SATURDAY || ultimoDia.getDayOfWeek() == DayOfWeek.SUNDAY) {
-				ultimoDia = ultimoDia.minusDays(1);
+	private LocalDate obterDataInicioPeriodo(Empregado emp, LocalDate dataFolha) {
+		LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(emp.getId());
+		LocalDate inicioAgenda;
+		String agenda = emp.getAgendaPagamento();
+		if (agenda.startsWith("semanal")) {
+			int k = RepositoryAgendas.getSemanas(agenda);
+			inicioAgenda = dataFolha.minusWeeks(k);
+		} else if (agenda.startsWith("mensal")) {
+			String[] partes = agenda.split("\\s+");
+			if (partes.length == 2 && partes[1].equals("$")) {
+				LocalDate prevMonth = dataFolha.minusMonths(1);
+				inicioAgenda = prevMonth.with(TemporalAdjusters.lastDayOfMonth());
+				while (inicioAgenda.getDayOfWeek() == DayOfWeek.SATURDAY || inicioAgenda.getDayOfWeek() == DayOfWeek.SUNDAY) {
+					inicioAgenda = inicioAgenda.minusDays(1);
+				}
+			} else if (partes.length == 2) {
+				int dia = Integer.parseInt(partes[1]);
+				inicioAgenda = dataFolha.minusMonths(1).withDayOfMonth(dia);
+			} else {
+				inicioAgenda = dataFolha.minusMonths(1);
 			}
-			return data.equals(ultimoDia);
-		} else if (tipo.equals("horista")) {
-			return data.getDayOfWeek() == DayOfWeek.FRIDAY;
-		} else if (tipo.equals("comissionado")) {
-			if (data.getDayOfWeek() != DayOfWeek.FRIDAY) return false;
-			long semanas = ChronoUnit.WEEKS.between(LocalDate.of(2005, 1, 14), data);
-			return Math.abs(semanas) % 2 == 0;
+		} else {
+			inicioAgenda = dataFolha.minusWeeks(1);
 		}
-		return false;
+
+		if (ultimoProc != null && !ultimoProc.equals(dataFolha) && ultimoProc.isAfter(inicioAgenda)) {
+			return ultimoProc;
+		}
+		return inicioAgenda;
 	}
 
 	private double[] obterHoras(Empregado emp, LocalDate dataFolha) {
 		double hNormais = 0.0;
 		double hExtras = 0.0;
 		if (emp instanceof EmpregadoHorista) {
-			LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(emp.getId());
+			LocalDate inicioPeriodo = obterDataInicioPeriodo(emp, dataFolha);
 			for (CartaoDePonto c : ((EmpregadoHorista) emp).getCartoesDePonto()) {
-				if (!c.getData().isAfter(dataFolha) && (ultimoProc == null || c.getData().isAfter(ultimoProc))) {
+				if (!c.getData().isAfter(dataFolha) && c.getData().isAfter(inicioPeriodo)) {
 					hNormais += Math.min(8.0, c.getHoras());
 					if (c.getHoras() > 8.0) hExtras += (c.getHoras() - 8.0);
 				}
 			}
 		}
 		return new double[]{hNormais, hExtras};
+	}
+
+	private double calcularSalarioFixo(EmpregadoComissionado c) {
+		String agenda = c.getAgendaPagamento();
+		if (agenda.startsWith("mensal")) {
+			return c.getSalarioMensal();
+		}
+		int k = RepositoryAgendas.getSemanas(agenda);
+		return truncar((c.getSalarioMensal() * 12.0 * k) / 52.0);
 	}
 
 	private double calcularSalarioBruto(Empregado emp, LocalDate dataFolha) {
@@ -316,18 +345,25 @@ public class ProcessadorFolhaPagamento {
 			bruto = (horas[0] * h.getSalarioPorHora()) + (horas[1] * h.getSalarioPorHora() * 1.5);
 		} else if (emp instanceof EmpregadoComissionado) {
 			EmpregadoComissionado c = (EmpregadoComissionado) emp;
-			double fixo = truncar((c.getSalarioMensal() * 12.0) / 26.0);
+			double fixo = calcularSalarioFixo(c);
 			double vendas = 0.0;
-			LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(c.getId());
+			LocalDate inicioPeriodo = obterDataInicioPeriodo(c, dataFolha);
 			for (ResultadoVenda v : c.getHistoricoVendas()) {
-				if (!v.getData().isAfter(dataFolha) && (ultimoProc == null || v.getData().isAfter(ultimoProc))) {
+				if (!v.getData().isAfter(dataFolha) && v.getData().isAfter(inicioPeriodo)) {
 					vendas += v.getValor();
 				}
 			}
 			double comissaoValor = truncar(arredondar(vendas) * c.getTaxaComissao());
 			bruto = fixo + comissaoValor;
 		} else if (emp instanceof EmpregadoAssalariado) {
-			bruto = ((EmpregadoAssalariado) emp).getSalarioMensal();
+			EmpregadoAssalariado a = (EmpregadoAssalariado) emp;
+			String agenda = a.getAgendaPagamento();
+			if (agenda.startsWith("mensal")) {
+				bruto = a.getSalarioMensal();
+			} else {
+				int k = RepositoryAgendas.getSemanas(agenda);
+				bruto = truncar((a.getSalarioMensal() * 12.0 * k) / 52.0);
+			}
 		}
 		return bruto;
 	}
@@ -338,23 +374,27 @@ public class ProcessadorFolhaPagamento {
 			double bruto = calcularSalarioBruto(emp, dataFolha);
 			if (bruto > 0) {
 				long diasPeriodo;
-				if (emp instanceof EmpregadoHorista) {
-					LocalDate ultimo = historicoPagamentos.getUltimoPagamento(emp.getId());
-					if (ultimo != null) {
-						diasPeriodo = ChronoUnit.DAYS.between(ultimo, dataFolha);
-					} else {
-						diasPeriodo = 7;
-					}
-				} else if (emp instanceof EmpregadoComissionado) {
-					diasPeriodo = 14;
-				} else {
+				String agenda = emp.getAgendaPagamento();
+				if (agenda.startsWith("mensal")) {
 					diasPeriodo = dataFolha.lengthOfMonth();
+				} else {
+					int k = RepositoryAgendas.getSemanas(agenda);
+					if (emp instanceof EmpregadoHorista) {
+						LocalDate ultimo = historicoPagamentos.getUltimoPagamento(emp.getId());
+						if (ultimo != null && !ultimo.equals(dataFolha)) {
+							diasPeriodo = ChronoUnit.DAYS.between(ultimo, dataFolha);
+						} else {
+							diasPeriodo = 7L * k;
+						}
+					} else {
+						diasPeriodo = 7L * k;
+					}
 				}
 				descontos += (emp.getTaxaSindical() * diasPeriodo);
 			}
-			LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(emp.getId());
+			LocalDate inicioPeriodo = obterDataInicioPeriodo(emp, dataFolha);
 			for (TaxaServico t : emp.getTaxasServico()) {
-				if (!t.getData().isAfter(dataFolha) && (ultimoProc == null || t.getData().isAfter(ultimoProc))) {
+				if (!t.getData().isAfter(dataFolha) && t.getData().isAfter(inicioPeriodo)) {
 					descontos += t.getValor();
 				}
 			}

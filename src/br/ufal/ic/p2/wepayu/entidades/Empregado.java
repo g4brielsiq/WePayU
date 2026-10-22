@@ -7,14 +7,13 @@ import java.util.List;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryTaxasServico;
 
 public abstract class Empregado implements Serializable {
-	
 
 	private String id;
-	
 	private String nome;
 	private String endereco;
 	private String tipo;
 	private String metodoPagamento = "emMaos";
+	private String agendaPagamento;
 
 	// atributos referente à características "sindicais" de alguns empregados
 	private boolean sindicalizado = false;
@@ -24,9 +23,10 @@ public abstract class Empregado implements Serializable {
 	private RepositoryTaxasServico taxasServico = new RepositoryTaxasServico();
 	private String banco, agencia, contaCorrente;
 
-	// id deve-se setar automaticamente
+	public Empregado() {
+	}
+
 	public Empregado(String id, String nome, String endereco, String tipo) {
-		
 		this.id = id;
 		this.nome = nome;
 		this.endereco = endereco;
@@ -73,6 +73,19 @@ public abstract class Empregado implements Serializable {
 		this.metodoPagamento = metodoPagamento;
 	}
 
+	public String getAgendaPagamento() {
+		if (agendaPagamento == null) {
+			if ("horista".equals(tipo)) return "semanal 5";
+			if ("comissionado".equals(tipo)) return "semanal 2 5";
+			return "mensal $";
+		}
+		return agendaPagamento;
+	}
+
+	public void setAgendaPagamento(String agendaPagamento) {
+		this.agendaPagamento = agendaPagamento;
+	}
+
 	public boolean isSindicalizado() {
 		return sindicalizado;
 	}
@@ -101,6 +114,14 @@ public abstract class Empregado implements Serializable {
 		return taxasServico.getTaxas();
 	}
 
+	public RepositoryTaxasServico getTaxasServicoRepositorio() {
+		return taxasServico;
+	}
+
+	public void setTaxasServicoRepositorio(RepositoryTaxasServico taxasServico) {
+		this.taxasServico = taxasServico;
+	}
+
 	public String getBanco() {
 		return banco;
 	}
@@ -124,7 +145,7 @@ public abstract class Empregado implements Serializable {
 	public void setContaCorrente(String contaCorrente) {
 		this.contaCorrente = contaCorrente;
 	}
-	
+
 	public void adicionarTaxaServico(TaxaServico taxa) {
 		taxasServico.adicionar(taxa);
 	}
@@ -135,8 +156,9 @@ public abstract class Empregado implements Serializable {
 
 	public abstract Empregado copia();
 
-	protected void copiarAtributosPara(Empregado destino) {
+	public void copiarAtributosPara(Empregado destino) {
 		destino.setMetodoPagamento(metodoPagamento);
+		destino.setAgendaPagamento(getAgendaPagamento());
 		destino.setSindicalizado(sindicalizado);
 		destino.setIdSindicato(idSindicato);
 		destino.setTaxaSindical(taxaSindical);

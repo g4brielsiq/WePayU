@@ -1,7 +1,13 @@
 package br.ufal.ic.p2.wepayu;
 
+import java.util.ArrayList;
 import java.util.Stack;
 
+import br.ufal.ic.p2.wepayu.excecoes.IdentificacaoNulaException;
+import br.ufal.ic.p2.wepayu.excecoes.WePayUException;
+import br.ufal.ic.p2.wepayu.persistencia.DadosAplicacao;
+import br.ufal.ic.p2.wepayu.persistencia.PersistenciaXML;
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryAgendas;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
 import br.ufal.ic.p2.wepayu.servicos.ProcessadorFolhaPagamento;
 import br.ufal.ic.p2.wepayu.servicos.ServicoEmpregados;
@@ -10,55 +16,89 @@ public class Facade {
 	private static class Snapshot {
 		private final RepositoryEmpregados empregados;
 		private final ProcessadorFolhaPagamento folha;
+		private final RepositoryAgendas agendas;
 
-		Snapshot(RepositoryEmpregados empregados, ProcessadorFolhaPagamento folha) {
+		Snapshot(RepositoryEmpregados empregados, ProcessadorFolhaPagamento folha, RepositoryAgendas agendas) {
 			this.empregados = empregados;
 			this.folha = new ProcessadorFolhaPagamento(folha);
+			this.agendas = agendas.copia();
 		}
 	}
 
 	private final Stack<Snapshot> historicoUndo = new Stack<>();
 	private final Stack<Snapshot> historicoRedo = new Stack<>();
+	private final PersistenciaXML persistencia = new PersistenciaXML();
 	private ProcessadorFolhaPagamento folhaPagamento = new ProcessadorFolhaPagamento();
 	private boolean sistemaEncerrado = false;
 	private RepositoryEmpregados listaEmpregados = new RepositoryEmpregados();
+	private RepositoryAgendas repositorioAgendas = new RepositoryAgendas();
+
+	public Facade() {
+		carregarEstadoPersistido();
+	}
+
+	private void carregarEstadoPersistido() {
+		if (persistencia.existeArquivo()) {
+			DadosAplicacao dados = persistencia.carregar();
+			if (dados != null && dados.getEmpregados() != null) {
+				this.listaEmpregados.setListaEmpregadosInterna(dados.getEmpregados());
+				this.listaEmpregados.setIdValido(dados.getIdValido());
+				if (dados.getPagamentos() != null) {
+					this.folhaPagamento.setHistoricoPagamentos(dados.getPagamentos());
+				}
+				if (dados.getAgendasDisponiveis() != null && !dados.getAgendasDisponiveis().isEmpty()) {
+					this.repositorioAgendas.setAgendas(dados.getAgendasDisponiveis());
+				}
+			}
+		}
+	}
 
 	public void zerarSistema() {
 		salvarEstado();
 		listaEmpregados.zerarSistema();
 		folhaPagamento.zerar();
+		repositorioAgendas.zerar();
+		persistencia.limpar();
 		sistemaEncerrado = false;
 	}
 
 	public void encerrarSistema() {
 		sistemaEncerrado = true;
+		DadosAplicacao dados = new DadosAplicacao();
+		dados.setEmpregados(listaEmpregados.getListaEmpregadosInterna());
+		dados.setIdValido(listaEmpregados.getIdValido());
+		dados.setPagamentos(folhaPagamento.getHistoricoPagamentos());
+		dados.setAgendasDisponiveis(new ArrayList<>(repositorioAgendas.getAgendas()));
+		persistencia.salvar(dados);
 	}
 
 	private void salvarEstado() {
-		historicoUndo.push(new Snapshot(listaEmpregados.copia(), folhaPagamento));
+		historicoUndo.push(new Snapshot(listaEmpregados.copia(), folhaPagamento, repositorioAgendas));
 		historicoRedo.clear();
 	}
 
 	public void undo() throws Exception {
-		if (sistemaEncerrado) throw new Exception("Nao pode dar comandos depois de encerrarSistema.");
-		if (historicoUndo.isEmpty()) throw new Exception("Nao ha comando a desfazer.");
-		historicoRedo.push(new Snapshot(listaEmpregados.copia(), folhaPagamento));
+		if (sistemaEncerrado) throw new WePayUException("Nao pode dar comandos depois de encerrarSistema.");
+		if (historicoUndo.isEmpty()) throw new WePayUException("Nao ha comando a desfazer.");
+		historicoRedo.push(new Snapshot(listaEmpregados.copia(), folhaPagamento, repositorioAgendas));
 		Snapshot anterior = historicoUndo.pop();
 		listaEmpregados = anterior.empregados.copia();
 		folhaPagamento = new ProcessadorFolhaPagamento(anterior.folha);
+		repositorioAgendas = anterior.agendas.copia();
 	}
 
 	public void redo() throws Exception {
-		if (sistemaEncerrado) throw new Exception("Nao pode dar comandos depois de encerrarSistema.");
-		if (historicoRedo.isEmpty()) throw new Exception("Nao ha comando a refazer.");
-		historicoUndo.push(new Snapshot(listaEmpregados.copia(), folhaPagamento));
+		if (sistemaEncerrado) throw new WePayUException("Nao pode dar comandos depois de encerrarSistema.");
+		if (historicoRedo.isEmpty()) throw new WePayUException("Nao ha comando a refazer.");
+		historicoUndo.push(new Snapshot(listaEmpregados.copia(), folhaPagamento, repositorioAgendas));
 		Snapshot seguinte = historicoRedo.pop();
 		listaEmpregados = seguinte.empregados.copia();
 		folhaPagamento = new ProcessadorFolhaPagamento(seguinte.folha);
+		repositorioAgendas = seguinte.agendas.copia();
 	}
 
 	private ServicoEmpregados servicoEmpregados() {
-		return new ServicoEmpregados(listaEmpregados, this::salvarEstado);
+		return new ServicoEmpregados(listaEmpregados, this::salvarEstado, repositorioAgendas);
 	}
 
 	public String getNumeroDeEmpregados() {
@@ -152,10 +192,14 @@ public class Facade {
 		folhaPagamento.rodaFolha(listaEmpregados, data, saida);
 	}
 
-	private void validarObrigatorio(String valor, String mensagem) throws Exception {
-		if (valor == null || valor.isEmpty()) {
-			throw new Exception(mensagem);
-		}
+	public void criarAgendaDePagamentos(String descricao) throws Exception {
+		salvarEstado();
+		repositorioAgendas.criarAgenda(descricao);
 	}
 
+	private void validarObrigatorio(String valor, String mensagem) throws Exception {
+		if (valor == null || valor.isEmpty()) {
+			throw new IdentificacaoNulaException(mensagem);
+		}
+	}
 }

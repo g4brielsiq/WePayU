@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="21.0.1" class="java.beans.XMLDecoder">
+ <object class="br.ufal.ic.p2.wepayu.persistencia.DadosAplicacao" id="DadosAplicacao0">
+  <void property="agendasDisponiveis">
+   <void method="add">
+    <string>semanal 5</string>
+   </void>
+   <void method="add">
+    <string>mensal $</string>
+   </void>
+   <void method="add">
+    <string>semanal 2 5</string>
+   </void>
+   <void method="add">
+    <string>mensal 1</string>
+   </void>
+   <void method="add">
+    <string>semanal 2</string>
+   </void>
+  </void>
+  <void property="empregados">
+   <void method="add">
+    <object class="br.ufal.ic.p2.wepayu.entidades.EmpregadoHorista">
+     <void property="agendaPagamento">
+      <string>mensal 1</string>
+     </void>
+     <void property="endereco">
+      <string>Rua dos Jooes, 333 - Campina Grande</string>
+     </void>
+     <void property="id">
+      <string>1</string>
+     </void>
+     <void property="nome">
+      <string>Joao da Silva</string>
+     </void>
+     <void property="salarioPorHora">
+      <double>23.0</double>
+     </void>
+    </object>
+   </void>
+  </void>
+  <void property="idValido">
+   <int>2</int>
+  </void>
+ </object>
+</java>

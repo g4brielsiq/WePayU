@@ -9,16 +9,30 @@ import java.util.List;
 
 public class RepositoryEmpregados implements Serializable {
 
-	private ArrayList<Empregado> listaEmpregados;
+	private ArrayList<Empregado> listaEmpregados = new ArrayList<>();
 	private int idValido = 1;
 
 	public RepositoryEmpregados() {
-
-		this.listaEmpregados = new ArrayList<Empregado>();
 	}
 
 	public List<Empregado> getListaEmpregados() {
 		return Collections.unmodifiableList(listaEmpregados);
+	}
+
+	public ArrayList<Empregado> getListaEmpregadosInterna() {
+		return listaEmpregados;
+	}
+
+	public void setListaEmpregadosInterna(ArrayList<Empregado> lista) {
+		this.listaEmpregados = lista != null ? lista : new ArrayList<>();
+	}
+
+	public int getIdValido() {
+		return idValido;
+	}
+
+	public void setIdValido(int idValido) {
+		this.idValido = idValido;
 	}
 
 	public int getNumeroDeEmpregados() {
@@ -26,8 +40,8 @@ public class RepositoryEmpregados implements Serializable {
 	}
 
 	public void zerarSistema() {
-
 		listaEmpregados.clear();
+		idValido = 1;
 	}
 
 	public RepositoryEmpregados copia() {
@@ -39,86 +53,52 @@ public class RepositoryEmpregados implements Serializable {
 		return clone;
 	}
 
-
 	public String gerarIdValido() {
-
 		String idGerado = String.valueOf(this.idValido);
-
 		this.idValido++;
-
 		return idGerado;
 	}
 
 	public void adicionarEmpregado(Empregado emp) {
-
 		this.listaEmpregados.add(emp);
 	}
 
-	public Empregado getIdEmpregado(String id) {	
-
-		for (int i = 0; i < listaEmpregados.size(); i++) {
-
-			if (listaEmpregados.get(i).getId().equals(id)) {
-
-				return listaEmpregados.get(i);
+	public Empregado getEmpregado(String id) {
+		for (Empregado emp : listaEmpregados) {
+			if (emp.getId() != null && emp.getId().equals(id)) {
+				return emp;
 			}
 		}
-
 		return null;
+	}
+
+	public Empregado getIdEmpregado(String id) {
+		return getEmpregado(id);
 	}
 
 	public Empregado buscarEmpregadoPorNome(String nome, int indice) {
-
 		int cont = 0;
-
-		for (int i = 0; i < listaEmpregados.size(); i++) {
-
-			if(listaEmpregados.get(i).getNome().equals(nome)) {
-
+		for (Empregado emp : listaEmpregados) {
+			if (emp.getNome() != null && emp.getNome().equals(nome)) {
 				cont++;
-
-				if(cont == indice) {
-
-					return listaEmpregados.get(i);
+				if (cont == indice) {
+					return emp;
 				}
 			}
 		}
-
 		return null;
 	}
-	
+
 	public void removerEmpregado(Empregado emp) {
-		
-	    listaEmpregados.remove(emp);
+		listaEmpregados.remove(emp);
 	}
-	
+
 	public Empregado getEmpregadoPorSindicato(String idSindicato) {
-	    
-	    for (int i = 0; i < listaEmpregados.size(); i++) {
-	        
-	        Empregado emp = listaEmpregados.get(i);
-	        
-	        // Verifica se o empregado está no sindicato e se o ID sindical é igual ao procurado
-	        if (emp.isSindicalizado() && emp.getIdSindicato() != null && emp.getIdSindicato().equals(idSindicato)) {
-	            
-	            return emp;
-	        }
-	    }
-	   
-	    return null;
+		for (Empregado emp : listaEmpregados) {
+			if (emp.isSindicalizado() && emp.getIdSindicato() != null && emp.getIdSindicato().equals(idSindicato)) {
+				return emp;
+			}
+		}
+		return null;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

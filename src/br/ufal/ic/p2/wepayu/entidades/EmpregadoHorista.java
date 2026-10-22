@@ -7,17 +7,19 @@ import java.util.List;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryCartoesDePonto;
 
 public class EmpregadoHorista extends Empregado implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	private double salarioPorHora;
-	private RepositoryCartoesDePonto cartoesDePonto;
+	private RepositoryCartoesDePonto cartoesDePonto = new RepositoryCartoesDePonto();
+
+	public EmpregadoHorista() {
+		super(null, null, null, "horista");
+	}
 
 	public EmpregadoHorista(String id, String nome, String endereco, double salarioPorHora) {
-	   
-	    super(id, nome, endereco, "horista");
-	    
-	    this.salarioPorHora = salarioPorHora;
-	    
-	    this.cartoesDePonto = new RepositoryCartoesDePonto();
+		super(id, nome, endereco, "horista");
+		this.salarioPorHora = salarioPorHora;
+		this.cartoesDePonto = new RepositoryCartoesDePonto();
 	}
 
 	public double getSalarioPorHora() {
@@ -31,7 +33,15 @@ public class EmpregadoHorista extends Empregado implements Serializable {
 	public List<CartaoDePonto> getCartoesDePonto() {
 		return cartoesDePonto.getCartoes();
 	}
-	
+
+	public RepositoryCartoesDePonto getCartoesRepositorio() {
+		return cartoesDePonto;
+	}
+
+	public void setCartoesRepositorio(RepositoryCartoesDePonto cartoesDePonto) {
+		this.cartoesDePonto = cartoesDePonto != null ? cartoesDePonto : new RepositoryCartoesDePonto();
+	}
+
 	public void adicionarCartaoDePonto(CartaoDePonto cartao) {
 		cartoesDePonto.adicionar(cartao);
 	}

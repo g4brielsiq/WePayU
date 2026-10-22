@@ -4,9 +4,19 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-/** Guarda a última data de pagamento e de processamento de cada empregado. */
 public class RepositoryPagamentos implements Serializable {
-	private final ArrayList<RegistroPagamento> registros = new ArrayList<>();
+	private ArrayList<RegistroPagamento> registros = new ArrayList<>();
+
+	public RepositoryPagamentos() {
+	}
+
+	public ArrayList<RegistroPagamento> getRegistros() {
+		return registros;
+	}
+
+	public void setRegistros(ArrayList<RegistroPagamento> registros) {
+		this.registros = registros != null ? registros : new ArrayList<>();
+	}
 
 	public LocalDate getUltimoPagamento(String idEmpregado) {
 		RegistroPagamento registro = buscar(idEmpregado);
@@ -44,43 +54,50 @@ public class RepositoryPagamentos implements Serializable {
 
 	private RegistroPagamento buscar(String idEmpregado) {
 		for (RegistroPagamento registro : registros) {
-			if (registro.getIdEmpregado().equals(idEmpregado)) {
+			if (registro.getIdEmpregado() != null && registro.getIdEmpregado().equals(idEmpregado)) {
 				return registro;
 			}
 		}
 		return null;
 	}
 
-	private static class RegistroPagamento implements Serializable {
-		private final String idEmpregado;
+	public static class RegistroPagamento implements Serializable {
+		private String idEmpregado;
 		private LocalDate ultimoPagamento;
 		private LocalDate ultimoProcessamento;
 
-		RegistroPagamento(String idEmpregado) {
+		public RegistroPagamento() {
+		}
+
+		public RegistroPagamento(String idEmpregado) {
 			this.idEmpregado = idEmpregado;
 		}
 
-		String getIdEmpregado() {
+		public String getIdEmpregado() {
 			return idEmpregado;
 		}
 
-		LocalDate getUltimoPagamento() {
+		public void setIdEmpregado(String idEmpregado) {
+			this.idEmpregado = idEmpregado;
+		}
+
+		public LocalDate getUltimoPagamento() {
 			return ultimoPagamento;
 		}
 
-		LocalDate getUltimoProcessamento() {
-			return ultimoProcessamento;
-		}
-
-		void setUltimoPagamento(LocalDate data) {
+		public void setUltimoPagamento(LocalDate data) {
 			ultimoPagamento = data;
 		}
 
-		void setUltimoProcessamento(LocalDate data) {
+		public LocalDate getUltimoProcessamento() {
+			return ultimoProcessamento;
+		}
+
+		public void setUltimoProcessamento(LocalDate data) {
 			ultimoProcessamento = data;
 		}
 
-		RegistroPagamento copia() {
+		public RegistroPagamento copia() {
 			RegistroPagamento copia = new RegistroPagamento(idEmpregado);
 			copia.ultimoPagamento = ultimoPagamento;
 			copia.ultimoProcessamento = ultimoProcessamento;

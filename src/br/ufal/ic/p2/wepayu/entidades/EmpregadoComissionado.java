@@ -7,18 +7,18 @@ import java.util.List;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryVendas;
 
 public class EmpregadoComissionado extends EmpregadoAssalariado implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	private double taxaComissao;
-	private RepositoryVendas historicoVendas;
+	private RepositoryVendas historicoVendas = new RepositoryVendas();
+
+	public EmpregadoComissionado() {
+		super(null, null, null, 0.0, "comissionado");
+	}
 
 	public EmpregadoComissionado(String id, String nome, String endereco, double salarioMensal, double taxaComissao) {
-
-		super(id, nome, endereco, salarioMensal);
-
-		this.setTipo("comissionado");
-
+		super(id, nome, endereco, salarioMensal, "comissionado");
 		this.taxaComissao = taxaComissao;
-
 		this.historicoVendas = new RepositoryVendas();
 	}
 
@@ -32,6 +32,14 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 
 	public List<ResultadoVenda> getHistoricoVendas() {
 		return historicoVendas.getVendas();
+	}
+
+	public RepositoryVendas getVendasRepositorio() {
+		return historicoVendas;
+	}
+
+	public void setVendasRepositorio(RepositoryVendas historicoVendas) {
+		this.historicoVendas = historicoVendas != null ? historicoVendas : new RepositoryVendas();
 	}
 
 	public void adicionarVenda(ResultadoVenda venda) {

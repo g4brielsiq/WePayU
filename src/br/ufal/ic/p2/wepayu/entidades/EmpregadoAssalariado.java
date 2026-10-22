@@ -3,13 +3,20 @@ package br.ufal.ic.p2.wepayu.entidades;
 import java.io.Serializable;
 
 public class EmpregadoAssalariado extends Empregado implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	private double salarioMensal;
 
+	public EmpregadoAssalariado() {
+		super(null, null, null, "assalariado");
+	}
+
 	public EmpregadoAssalariado(String id, String nome, String endereco, double salarioMensal) {
-		
-		super(id, nome, endereco, "assalariado");
-		
+		this(id, nome, endereco, salarioMensal, "assalariado");
+	}
+
+	public EmpregadoAssalariado(String id, String nome, String endereco, double salarioMensal, String tipo) {
+		super(id, nome, endereco, tipo);
 		this.salarioMensal = salarioMensal;
 	}
 

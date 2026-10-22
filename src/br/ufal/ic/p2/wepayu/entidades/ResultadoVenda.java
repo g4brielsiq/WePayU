@@ -8,14 +8,16 @@ public class ResultadoVenda implements Serializable {
 	private LocalDate data;
 	private double valor;
 
-	public ResultadoVenda(LocalDate data, double valor) {
-		
-        this.data = data;
-        this.valor = valor;
-    }
+	public ResultadoVenda() {
+	}
 
-	public LocalDate getData() { 
-		return data; 
+	public ResultadoVenda(LocalDate data, double valor) {
+		this.data = data;
+		this.valor = valor;
+	}
+
+	public LocalDate getData() {
+		return data;
 	}
 
 	public void setData(LocalDate data) {
