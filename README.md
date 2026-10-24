@@ -6,41 +6,44 @@ Projeto prático desenvolvido para a disciplina **Programação 2 (COMP372)** do
 
 ## Contexto e Objetivos da Disciplina
 
-A disciplina de Programação 2 tem como foco os fundamentos de **Programação Orientada a Objetos (POO)** em Java, abordando temas como qualidade de software, testes de aceitação, boas práticas de modelagem e padrões de projeto.
+A disciplina de Programação 2 tem como foco os fundamentos de **Programação Orientada a Objetos (POO)** em Java, abordando temas como qualidade de software, testes de aceitação, boas práticas de modelagem, encapsulamento, polimorfismo e padrões arquiteturais fundamentais.
 
-A proposta deste projeto é praticar construindo, de forma incremental, a lógica de negócio de um sistema de folha de pagamento. O projeto implementa as User stories US1 a US8, incluindo cadastro de empregados, cartões de ponto, vendas, sindicato, processamento de pagamentos e undo/redo.
+A proposta deste projeto é praticar construindo, de forma incremental, a lógica de negócio completa de um sistema de folha de pagamento. O projeto implementa integralmente as User Stories **US1 a US10_1**, incluindo cadastro e gestão de empregados, cartões de ponto, vendas, taxas sindicais, prévia e emissão da folha de pagamento, mecanismo de desfazer e refazer (undo/redo), criação de agendas personalizadas e persistência de dados em arquivos XML.
 
-Os testes de aceitação são executados pelo EasyAccept e acessam o sistema por meio da classe `br.ufal.ic.p2.wepayu.Facade`. Por esse motivo, a `Facade` e os nomes/assinaturas de seus métodos e comandos são mantidos como ponto de entrada para os testes.
+Os testes de aceitação são executados pelo **EasyAccept** e acessam o sistema por meio da classe `br.ufal.ic.p2.wepayu.Facade`. Por esse motivo, a `Facade` e as assinaturas de seus métodos são estritamente mantidas como ponto de entrada para os testes automatizados.
 
 O objetivo principal foi aplicar os pilares teóricos discutidos em sala de aula na solução de um problema com regras de negócio densas e dependências temporais:
 
 1. **Abstração e Modelagem do Mundo Real:** Representação das diferentes modalidades de contratação de uma empresa em classes e métodos com responsabilidades bem definidas.
 2. **Encapsulamento e Estado Consistente:** Proteção dos atributos internos das entidades, garantindo que mutações e cálculos obedeçam estritamente às regras do domínio.
-3. **Delegação e Coesão:** Transferência de lógica de cálculo para quem é dono dos dados (por exemplo, cada tipo de empregado sabe como seu contracheque é composto), evitando classes inchadas ou métodos que concentrem regras alheias.
-4. **Composição vs. Herança:** Utilização criteriosa de herança para relações do tipo *"é-um"* e de composição para coleções dinâmicas de dados associados.
-5. **Tratamento de Exceções:** Sinalização e propagação estruturada de violações de negócio (datas inválidas, valores negativos, entidades não localizadas).
-6. **Desenvolvimento Guiado por Testes de Aceitação:** Validação funcional rigorosa e contínua por meio do framework **EasyAccept**, cobrindo os cenários das histórias de usuário US1 a US8.
+3. **Polimorfismo e Delegação Coesa:** Transferência da lógica de cálculo para quem detém os dados (cada subtipo de empregado calcula seu próprio salário bruto e avalia seus dias de pagamento), eliminando cadeias excessivas de verificações de tipo (`instanceof`) e concentradores de regras alheias.
+4. **Composição vs. Herança:** Utilização criteriosa de herança para relações autênticas do tipo *"é-um"* (`EmpregadoHorista`, `EmpregadoAssalariado` e `EmpregadoComissionado`) e de composição para coleções dinâmicas de lançamentos contábeis.
+5. **Hierarquia de Exceções Customizadas:** Sinalização e propagação estruturada de violações de negócio por meio de tipos específicos derivados de uma exceção base comum (`WePayUException`), preservando com precisão as mensagens exigidas pelo EasyAccept.
+6. **Persistência Declarativa em XML:** Serialização e restauração do estado integral do sistema com `java.beans.XMLEncoder` e `java.beans.XMLDecoder`, seguindo a convenção de JavaBeans sem dependências de frameworks externos ou bancos de dados SQL.
+7. **Desenvolvimento Guiado por Testes de Aceitação:** Validação funcional rigorosa e contínua cobrindo 100% dos cenários das histórias de usuário US1 a US10_1.
 
 ---
 
-## Escopo Implementado (US1 a US8)
+## Escopo Implementado (US1 a US10_1)
 
-O sistema cobre o ciclo de vida completo de administração e remuneração de pessoas:
+O sistema cobre o ciclo de vida completo de administração, remuneração, auditoria e persistência:
 
-- **US1 & US1.1 — Gestão de Empregados:** Criação, recuperação de atributos e remoção de empregados dos tipos horista, assalariado e comissionado.
-- **US2 & US2.1 — Cartões de Ponto:** Registro diário de horas trabalhadas para empregados horistas, com segregação entre horas normais (até 8h) e horas extras com adicional de 50%.
-- **US3 & US3.1 — Vendas e Comissões:** Lançamento de resultados de vendas para comissionados, com cálculo proporcional sobre as vendas apuradas.
-- **US4 & US4.1 — Vínculo Sindical e Taxas de Serviço:** Associação de empregados a sindicatos, retenção de taxa sindical diária e lançamento de taxas de serviço específicas.
-- **US5 & US5.1 — Alteração de Dados Cadastrais:** Modificação dinâmica de métodos de pagamento (em mãos, correios ou depósito bancário), status sindical e categoria contratual.
-- **US6 & US6.1 — Prévia da Folha:** Apuração prévia dos valores brutos a serem desembolsados em uma data específica (`totalFolha`).
-- **US7 — Processamento e Emissão da Folha:** Verificação do calendário de pagamento de cada modalidade (sextas-feiras para horistas, quinzenal para comissionados e último dia útil do mês para assalariados), consolidação de descontos sindicais retroativos por período trabalhado, cálculo de valores líquidos e gravação do relatório tabular padronizado.
-- **US8 — Mecanismo de Desfazer e Refazer (Undo/Redo):** Rastreamento linear de comandos mutantes por meio de *snapshots*, permitindo reverter e reaplicar operações de cadastro, lançamentos contábeis, fechamentos de folha e resets de sistema.
+- **US1 & US1.1 - Gestão de Empregados:** Criação, recuperação de atributos, busca por nome/índice e remoção de empregados dos tipos horista, assalariado e comissionado.
+- **US2 & US2.1 - Cartões de Ponto:** Registro diário de horas trabalhadas para horistas, com segregação entre horas normais (até 8h) e horas extras com adicional de 50%.
+- **US3 & US3.1 - Vendas e Comissões:** Lançamento de ordens de vendas para comissionados, com apuração proporcional e acumulada de comissões por período.
+- **US4 & US4.1 - Vínculo Sindical e Taxas de Serviço:** Associação de empregados a sindicatos, retenção diária de taxa sindical por período e lançamento de taxas de serviço avulsas.
+- **US5 & US5.1 - Alteração de Dados Cadastrais:** Modificação dinâmica de métodos de pagamento (em mãos, correios ou depósito bancário com banco, agência e conta corrente), status sindical, categoria contratual e agenda de pagamento.
+- **US6 & US6.1 - Prévia da Folha:** Apuração prévia e consolidada dos valores brutos a serem desembolsados em uma data específica (`totalFolha`).
+- **US7 - Processamento e Emissão da Folha:** Verificação do calendário de pagamento de cada modalidade, consolidação retroativa de descontos sindicais e taxas de serviço por período efetivamente trabalhado, apuração de salários líquidos e geração do relatório tabular padronizado (`rodaFolha`).
+- **US8 - Mecanismo de Desfazer e Refazer (Undo/Redo):** Rastreamento linear de comandos mutantes por meio de *snapshots* do repositório de empregados, histórico de pagamentos e agendas disponíveis, permitindo reverter e reaplicar operações em qualquer profundidade.
+- **US9 & US9.1 - Criação e Gestão de Agendas de Pagamento:** Validação rigorosa e inclusão de novas agendas personalizadas semanais (`semanal <dia>`, `semanal <k> <dia>`) e mensais (`mensal <dia>`, `mensal $`), permitindo sua associação a qualquer funcionário.
+- **US10 & US10.1 - Persistência de Dados em XML:** Persistência do estado global do sistema no encerramento (`encerrarSistema`) gravando em `wepayu_dados.xml`, com restauração automática e transparente na reinicialização da aplicação.
 
 ---
 
 ## Arquitetura e Organização do Projeto
 
-Seguindo a recomendação de modularização trabalhada na disciplina, o código foi organizado em pacotes coesos:
+Seguindo as diretrizes de modularização trabalhadas na disciplina, o código foi organizado em pacotes coesos:
 
 ```text
 src/
@@ -48,47 +51,57 @@ src/
 └── br/ufal/ic/p2/wepayu/
     ├── Facade.java
     ├── entidades/
-    │   ├── Empregado.java                 (Superclasse abstrata)
-    │   ├── EmpregadoHorista.java
-    │   ├── EmpregadoAssalariado.java
-    │   ├── EmpregadoComissionado.java
+    │   ├── Empregado.java                 (Superclasse abstrata base)
+    │   ├── EmpregadoHorista.java          (Cálculo de horas normais/extras)
+    │   ├── EmpregadoAssalariado.java      (Cálculo de salário fixo e proporcional)
+    │   ├── EmpregadoComissionado.java     (Cálculo de comissões e base fixa)
     │   ├── CartaoDePonto.java
     │   ├── ResultadoVenda.java
     │   └── TaxaServico.java
     ├── repositorio/
-    │   ├── RepositoryEmpregados.java      (Empregados)
-    │   ├── RepositoryCartoesDePonto.java  (Cartões)
-    │   ├── RepositoryVendas.java           (Vendas)
-    │   ├── RepositoryTaxasServico.java     (Taxas sindicais extras)
-    │   └── RepositoryPagamentos.java       (Datas de processamento)
+    │   ├── RepositoryEmpregados.java      (Cadastro e busca de empregados)
+    │   ├── RepositoryCartoesDePonto.java  (Histórico de cartões de ponto)
+    │   ├── RepositoryVendas.java           (Histórico de vendas)
+    │   ├── RepositoryTaxasServico.java     (Histórico de taxas sindicais avulsas)
+    │   ├── RepositoryPagamentos.java       (Datas de processamento e histórico)
+    │   └── RepositoryAgendas.java          (Catálogo e validação de agendas)
     ├── servicos/
     │   ├── ServicoEmpregados.java         (Regras de validação e cadastros)
-    │   └── ProcessadorFolhaPagamento.java (Cálculos de proventos, descontos e datas)
+    │   └── ProcessadorFolhaPagamento.java (Coordenação e emissão da folha)
+    ├── persistencia/
+    │   ├── DadosAplicacao.java            (Contêiner JavaBeans para serialização)
+    │   └── PersistenciaXML.java           (Gravador/leitor XMLEncoder e XMLDecoder)
+    ├── util/
+    │   └── FormatoUtil.java               (Parsing estrito, formatações e precisão numérica)
     └── excecoes/
-        └── EmpregadoNaoExisteException.java
-
-### `Facade`
-
-É a porta de entrada exigida pelo EasyAccept. Traduz os comandos de teste para chamadas do sistema e mantém o histórico de undo/redo. Ela não concentra as regras de cadastro nem os cálculos da folha: encaminha cada operação para o serviço correspondente.
-
-### `entidades`
-
-Contém `Empregado` e os tipos `EmpregadoHorista`, `EmpregadoAssalariado` e `EmpregadoComissionado`, além de `CartaoDePonto`, `ResultadoVenda` e `TaxaServico`. As entidades guardam seus próprios dados cadastrais e usam os repositórios adequados para suas coleções associadas: o empregado sindicalizado mantém um repositório de taxas, o horista mantém um de cartões, e o comissionado mantém um de vendas. Cada subtipo sabe produzir uma cópia dos seus dados e dessas coleções, usada pelo histórico.
-
-### `repositorio`
-
-Os repositórios mantêm coleções com `ArrayList` e oferecem operações de inclusão, consulta e cópia. `RepositoryEmpregados` cuida do cadastro e da busca de empregados. `RepositoryCartoesDePonto`, `RepositoryVendas` e `RepositoryTaxasServico` guardam os lançamentos associados aos empregados e somam valores por período. `RepositoryPagamentos` guarda a última data de pagamento e de processamento de cada empregado. A escolha de listas mantém a implementação didática: as buscas percorrem os elementos em sequência, sem depender de `Map`/`HashMap`.
-
-### `servicos`
-
-`ServicoEmpregados` concentra as regras de negócio de cadastro e consulta, como lançar cartões, vendas e taxas de serviço. A `Facade` faz verificações iniciais de campos obrigatórios, por estar na fronteira dos comandos, e encaminha as demais regras ao serviço. `ProcessadorFolhaPagamento` concentra as regras de calendário, cálculo e geração da folha; seu estado auxiliar fica em `RepositoryPagamentos`.
-
-### `excecoes`
-
-Reúne exceções específicas do domínio, mantendo-as separadas das entidades e dos serviços.
-
+        ├── WePayUException.java           (Classe base da hierarquia)
+        ├── AtributoNaoExisteException.java
+        ├── EmpregadoNaoExisteException.java
+        ├── FolhaException.java
+        ├── IdentificacaoNulaException.java
+        └── ValorInvalidoException.java
 ```
 
-## Decisões de projeto
+## Componentes Principais
 
-A organização foi mantida intencionalmente simples: pacotes representam responsabilidades reconhecíveis no conteúdo da disciplina, sem introduzir camadas ou padrões que não tragam benefício para este escopo. O histórico guarda cópias do repositório e do estado do processador da folha; por isso undo/redo restaura tanto os dados dos empregados quanto o controle dos pagamentos já processados.
+### `Facade`
+É a porta de entrada única exigida pelo EasyAccept. Valida parâmetros iniciais de comando, delega as chamadas de negócio para os serviços correspondentes, gerencia as pilhas de *undo* e *redo* e orquestra o encerramento e a recuperação do estado persistido em XML.
+
+### `entidades`
+Representa o modelo de domínio do sistema. A superclasse abstrata `Empregado` define contratos polimórficos como `getSalario()`, `setSalario(double)`, `calcularSalarioBruto(...)`, `isDiaDePagamento(...)` e `getDescricaoMetodoPagamento()`. Suas subclasses concretas (`EmpregadoHorista`, `EmpregadoAssalariado` e `EmpregadoComissionado`) implementam suas regras financeiras de forma autônoma e encapsulam suas coleções dinâmicas de cartões, vendas e taxas sindicais.
+
+### `repositorio`
+Gerencia coleções em memória usando `ArrayList` e métodos expressivos de consulta, adição, filtragem temporal e clonagem profunda (`copia()`). A escolha de coleções sequenciais mantém a didática do projeto clara, simples e livre de dependências complexas.
+
+### `servicos`
+- `ServicoEmpregados`: Concentra a orquestração do ciclo de vida dos empregados, validação cadastral, lançamentos de cartões, vendas, taxas e mutações de atributos.
+- `ProcessadorFolhaPagamento`: Coordena a apuração prévia e a emissão tabular da folha de pagamento, delegando o cálculo bruto a cada entidade, consolidando descontos e registrando as datas de processamento.
+
+### `persistencia`
+Implementa o mecanismo de persistência em arquivo XML local (`wepayu_dados.xml`) através de `java.beans.XMLEncoder` e `java.beans.XMLDecoder`. Utiliza `PersistenceDelegate` para a serialização segura e canônica de tipos temporais modernos da API `java.time.LocalDate` e segue as convenções de JavaBeans (construtores padrão e pares de *getters*/*setters*).
+
+### `util`
+`FormatoUtil` centraliza operações transversais de parsing estrito de datas (`d/M/uuuu`), arredondamento monetário (`BigDecimal` com `RoundingMode.HALF_UP`), truncamento de comissões/salários fracionados (`RoundingMode.DOWN`) e formatação monetária e de horas.
+
+### `excecoes`
+Contém a árvore de exceções customizadas do sistema encabeçada por `WePayUException`, assegurando que 100% dos erros de validação e de negócio sejam sinalizados com tipos semânticos precisos e compatíveis com os scripts do EasyAccept.
