@@ -17,6 +17,7 @@ import br.ufal.ic.p2.wepayu.excecoes.IdentificacaoNulaException;
 import br.ufal.ic.p2.wepayu.excecoes.ValorInvalidoException;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryAgendas;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
+import br.ufal.ic.p2.wepayu.util.FormatoUtil;
 
 public class ServicoEmpregados {
 	private final RepositoryEmpregados empregados;
@@ -48,11 +49,7 @@ public class ServicoEmpregados {
 		case "tipo": return emp.getTipo();
 		case "agendaPagamento": return emp.getAgendaPagamento();
 		case "sindicalizado": return String.valueOf(emp.isSindicalizado());
-		case "salario":
-			if (emp instanceof EmpregadoHorista) return formatarMonetario(((EmpregadoHorista) emp).getSalarioPorHora());
-			if (emp instanceof EmpregadoComissionado) return formatarMonetario(((EmpregadoComissionado) emp).getSalarioMensal());
-			if (emp instanceof EmpregadoAssalariado) return formatarMonetario(((EmpregadoAssalariado) emp).getSalarioMensal());
-			throw new AtributoNaoExisteException();
+		case "salario": return FormatoUtil.formatarMonetario(emp.getSalario());
 		case "comissao":
 			if (!(emp instanceof EmpregadoComissionado)) throw new ValorInvalidoException("Empregado nao eh comissionado.");
 			return formatarMonetario(((EmpregadoComissionado) emp).getTaxaComissao());
@@ -298,8 +295,7 @@ public class ServicoEmpregados {
 			catch (NumberFormatException e) { throw new ValorInvalidoException("Salario deve ser numerico."); }
 			if (novoSalario < 0) throw new ValorInvalidoException("Salario deve ser nao-negativo.");
 			registrarAlteracao.run();
-			if (emp instanceof EmpregadoHorista) ((EmpregadoHorista) emp).setSalarioPorHora(novoSalario);
-			else if (emp instanceof EmpregadoAssalariado) ((EmpregadoAssalariado) emp).setSalarioMensal(novoSalario);
+			emp.setSalario(novoSalario);
 			break;
 		case "comissao":
 			if (valor == null || valor.isEmpty()) throw new ValorInvalidoException("Comissao nao pode ser nula.");
@@ -458,24 +454,15 @@ public class ServicoEmpregados {
 		emp.setContaCorrente(contaCorrente);
 	}
 
-	private LocalDate converterData(String data, String mensagemErro) throws Exception {
-		try {
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/uuuu")
-					.withResolverStyle(java.time.format.ResolverStyle.STRICT);
-			return LocalDate.parse(data, formatter);
-		} catch (DateTimeParseException e) {
-			throw new ValorInvalidoException(mensagemErro);
-		}
+	private LocalDate converterData(String data, String mensagemErro) throws ValorInvalidoException {
+		return FormatoUtil.converterData(data, mensagemErro);
 	}
 
 	private String formatarMonetario(double valor) {
-		return String.format("%.2f", valor).replace(".", ",");
+		return FormatoUtil.formatarMonetario(valor);
 	}
 
 	private String formatarHoras(double valor) {
-		if (valor % 1 == 0) return String.valueOf((long) valor);
-		String formatado = String.valueOf(valor).replace(".", ",");
-		if (formatado.endsWith(",0")) return formatado.substring(0, formatado.length() - 2);
-		return formatado;
+		return FormatoUtil.formatarHoras(valor);
 	}
 }

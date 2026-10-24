@@ -2,29 +2,23 @@ package br.ufal.ic.p2.wepayu.servicos;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import br.ufal.ic.p2.wepayu.entidades.CartaoDePonto;
 import br.ufal.ic.p2.wepayu.entidades.Empregado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoAssalariado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoComissionado;
 import br.ufal.ic.p2.wepayu.entidades.EmpregadoHorista;
-import br.ufal.ic.p2.wepayu.entidades.ResultadoVenda;
-import br.ufal.ic.p2.wepayu.entidades.TaxaServico;
 import br.ufal.ic.p2.wepayu.excecoes.FolhaException;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryAgendas;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryEmpregados;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryPagamentos;
+import br.ufal.ic.p2.wepayu.util.FormatoUtil;
 
 public class ProcessadorFolhaPagamento {
 
@@ -50,28 +44,33 @@ public class ProcessadorFolhaPagamento {
 	}
 
 	public String totalFolha(RepositoryEmpregados empregados, String data) throws Exception {
-		LocalDate dataFolha = converterData(data, "Data invalida.");
+		LocalDate dataFolha = FormatoUtil.converterData(data, "Data invalida.");
 		double totalBruto = 0.0;
-		for (Empregado emp : empregados.getListaEmpregados()) {
-			if (isDiaDePagamento(emp, dataFolha)) {
-				totalBruto += calcularSalarioBruto(emp, dataFolha);
+		for (Empregado empregado : empregados.getListaEmpregados()) {
+			if (empregado.isDiaDePagamento(dataFolha)) {
+				LocalDate inicioPeriodo = obterDataInicioPeriodo(empregado, dataFolha);
+				totalBruto += empregado.calcularSalarioBruto(dataFolha, inicioPeriodo);
 			}
 		}
-		return formatarMonetario(arredondar(totalBruto));
+		return FormatoUtil.formatarMonetario(FormatoUtil.arredondar(totalBruto));
 	}
 
 	public void rodaFolha(RepositoryEmpregados empregados, String data, String saida) throws Exception {
-		LocalDate dataFolha = converterData(data, "Data invalida.");
+		LocalDate dataFolha = FormatoUtil.converterData(data, "Data invalida.");
 
 		List<EmpregadoHorista> horistas = new ArrayList<>();
 		List<EmpregadoAssalariado> assalariados = new ArrayList<>();
 		List<EmpregadoComissionado> comissionados = new ArrayList<>();
 
-		for (Empregado emp : empregados.getListaEmpregados()) {
-			if (isDiaDePagamento(emp, dataFolha)) {
-				if (emp instanceof EmpregadoComissionado) comissionados.add((EmpregadoComissionado) emp);
-				else if (emp instanceof EmpregadoHorista) horistas.add((EmpregadoHorista) emp);
-				else if (emp instanceof EmpregadoAssalariado) assalariados.add((EmpregadoAssalariado) emp);
+		for (Empregado empregado : empregados.getListaEmpregados()) {
+			if (empregado.isDiaDePagamento(dataFolha)) {
+				if (empregado instanceof EmpregadoComissionado) {
+					comissionados.add((EmpregadoComissionado) empregado);
+				} else if (empregado instanceof EmpregadoHorista) {
+					horistas.add((EmpregadoHorista) empregado);
+				} else if (empregado instanceof EmpregadoAssalariado) {
+					assalariados.add((EmpregadoAssalariado) empregado);
+				}
 			}
 		}
 
@@ -107,33 +106,34 @@ public class ProcessadorFolhaPagamento {
 				double totalDescHoristas = 0.0;
 				double totalLiqHoristas = 0.0;
 
-				for (EmpregadoHorista h : horistas) {
-					double[] hs = obterHoras(h, dataFolha);
-					int hn = (int) hs[0];
-					int he = (int) hs[1];
-					double bruto = arredondar(calcularSalarioBruto(h, dataFolha));
-					double desc = arredondar(calcularDescontos(h, dataFolha));
-					double liq = arredondar(bruto - desc);
+				for (EmpregadoHorista horista : horistas) {
+					LocalDate inicioPeriodo = obterDataInicioPeriodo(horista, dataFolha);
+					double[] horasApontadas = horista.obterHorasTrabalhadas(inicioPeriodo, dataFolha);
+					int horasNormais = (int) horasApontadas[0];
+					int horasExtras = (int) horasApontadas[1];
+					double bruto = FormatoUtil.arredondar(horista.calcularSalarioBruto(dataFolha, inicioPeriodo));
+					double desc = FormatoUtil.arredondar(calcularDescontos(horista, dataFolha));
+					double liq = FormatoUtil.arredondar(bruto - desc);
 
-					totalHoras += hn;
-					totalExtras += he;
+					totalHoras += horasNormais;
+					totalExtras += horasExtras;
 					totalBrutoHoristas += bruto;
 					totalDescHoristas += desc;
 					totalLiqHoristas += liq;
 
 					writer.printf("%-36s %5d %5d %13s %9s %15s %s\n",
-							h.getNome(), hn, he,
-							formatarMonetario(bruto),
-							formatarMonetario(desc),
-							formatarMonetario(liq),
-							formatarMetodo(h));
+							horista.getNome(), horasNormais, horasExtras,
+							FormatoUtil.formatarMonetario(bruto),
+							FormatoUtil.formatarMonetario(desc),
+							FormatoUtil.formatarMonetario(liq),
+							horista.getDescricaoMetodoPagamento());
 				}
 				writer.println();
 				writer.printf("%-36s %5d %5d %13s %9s %15s\n",
 						"TOTAL HORISTAS", totalHoras, totalExtras,
-						formatarMonetario(totalBrutoHoristas),
-						formatarMonetario(totalDescHoristas),
-						formatarMonetario(totalLiqHoristas));
+						FormatoUtil.formatarMonetario(totalBrutoHoristas),
+						FormatoUtil.formatarMonetario(totalDescHoristas),
+						FormatoUtil.formatarMonetario(totalLiqHoristas));
 				writer.println();
 
 				// --- BLOCO ASSALARIADOS ---
@@ -147,28 +147,28 @@ public class ProcessadorFolhaPagamento {
 				double totalDescAss = 0.0;
 				double totalLiqAss = 0.0;
 
-				for (EmpregadoAssalariado a : assalariados) {
-					double bruto = arredondar(calcularSalarioBruto(a, dataFolha));
-					double desc = arredondar(calcularDescontos(a, dataFolha));
-					double liq = arredondar(bruto - desc);
+				for (EmpregadoAssalariado assalariado : assalariados) {
+					double bruto = FormatoUtil.arredondar(assalariado.calcularSalarioBruto(dataFolha, null));
+					double desc = FormatoUtil.arredondar(calcularDescontos(assalariado, dataFolha));
+					double liq = FormatoUtil.arredondar(bruto - desc);
 
 					totalBrutoAss += bruto;
 					totalDescAss += desc;
 					totalLiqAss += liq;
 
 					writer.printf("%-48s %13s %9s %15s %s\n",
-							a.getNome(),
-							formatarMonetario(bruto),
-							formatarMonetario(desc),
-							formatarMonetario(liq),
-							formatarMetodo(a));
+							assalariado.getNome(),
+							FormatoUtil.formatarMonetario(bruto),
+							FormatoUtil.formatarMonetario(desc),
+							FormatoUtil.formatarMonetario(liq),
+							assalariado.getDescricaoMetodoPagamento());
 				}
 				writer.println();
 				writer.printf("%-48s %13s %9s %15s\n",
 						"TOTAL ASSALARIADOS",
-						formatarMonetario(totalBrutoAss),
-						formatarMonetario(totalDescAss),
-						formatarMonetario(totalLiqAss));
+						FormatoUtil.formatarMonetario(totalBrutoAss),
+						FormatoUtil.formatarMonetario(totalDescAss),
+						FormatoUtil.formatarMonetario(totalLiqAss));
 				writer.println();
 
 				// --- BLOCO COMISSIONADOS ---
@@ -185,20 +185,14 @@ public class ProcessadorFolhaPagamento {
 				double totalDescCom = 0.0;
 				double totalLiqCom = 0.0;
 
-				for (EmpregadoComissionado c : comissionados) {
-					double fixo = calcularSalarioFixo(c);
-					double vendas = 0.0;
-					LocalDate inicioPeriodo = obterDataInicioPeriodo(c, dataFolha);
-					for (ResultadoVenda v : c.getHistoricoVendas()) {
-						if (!v.getData().isAfter(dataFolha) && v.getData().isAfter(inicioPeriodo)) {
-							vendas += v.getValor();
-						}
-					}
-					vendas = arredondar(vendas);
-					double comissaoValor = truncar(vendas * c.getTaxaComissao());
-					double bruto = arredondar(fixo + comissaoValor);
-					double desc = arredondar(calcularDescontos(c, dataFolha));
-					double liq = arredondar(bruto - desc);
+				for (EmpregadoComissionado comissionado : comissionados) {
+					LocalDate inicioPeriodo = obterDataInicioPeriodo(comissionado, dataFolha);
+					double fixo = comissionado.calcularSalarioFixo();
+					double vendas = comissionado.obterTotalVendas(inicioPeriodo, dataFolha);
+					double comissaoValor = comissionado.obterComissao(inicioPeriodo, dataFolha);
+					double bruto = FormatoUtil.arredondar(fixo + comissaoValor);
+					double desc = FormatoUtil.arredondar(calcularDescontos(comissionado, dataFolha));
+					double liq = FormatoUtil.arredondar(bruto - desc);
 
 					totalFixoCom += fixo;
 					totalVendasCom += vendas;
@@ -208,92 +202,57 @@ public class ProcessadorFolhaPagamento {
 					totalLiqCom += liq;
 
 					writer.printf("%-21s %8s %8s %8s %13s %9s %15s %s\n",
-							c.getNome(),
-							formatarMonetario(fixo),
-							formatarMonetario(vendas),
-							formatarMonetario(comissaoValor),
-							formatarMonetario(bruto),
-							formatarMonetario(desc),
-							formatarMonetario(liq),
-							formatarMetodo(c));
+							comissionado.getNome(),
+							FormatoUtil.formatarMonetario(fixo),
+							FormatoUtil.formatarMonetario(vendas),
+							FormatoUtil.formatarMonetario(comissaoValor),
+							FormatoUtil.formatarMonetario(bruto),
+							FormatoUtil.formatarMonetario(desc),
+							FormatoUtil.formatarMonetario(liq),
+							comissionado.getDescricaoMetodoPagamento());
 				}
 				writer.println();
 				writer.printf("%-21s %8s %8s %8s %13s %9s %15s\n",
 						"TOTAL COMISSIONADOS",
-						formatarMonetario(totalFixoCom),
-						formatarMonetario(totalVendasCom),
-						formatarMonetario(totalComissaoCom),
-						formatarMonetario(totalBrutoCom),
-						formatarMonetario(totalDescCom),
-						formatarMonetario(totalLiqCom));
+						FormatoUtil.formatarMonetario(totalFixoCom),
+						FormatoUtil.formatarMonetario(totalVendasCom),
+						FormatoUtil.formatarMonetario(totalComissaoCom),
+						FormatoUtil.formatarMonetario(totalBrutoCom),
+						FormatoUtil.formatarMonetario(totalDescCom),
+						FormatoUtil.formatarMonetario(totalLiqCom));
 				writer.println();
 
-				double totalGeralBruto = arredondar(totalBrutoHoristas + totalBrutoAss + totalBrutoCom);
-				writer.print("TOTAL FOLHA: " + formatarMonetario(totalGeralBruto));
+				double totalGeralBruto = FormatoUtil.arredondar(totalBrutoHoristas + totalBrutoAss + totalBrutoCom);
+				writer.print("TOTAL FOLHA: " + FormatoUtil.formatarMonetario(totalGeralBruto));
 			}
 		} catch (Exception e) {
 			throw new FolhaException("Erro ao gerar folha.", e);
 		}
 
-		for (EmpregadoHorista h : horistas) {
-			double bruto = calcularSalarioBruto(h, dataFolha);
-			historicoPagamentos.registrarProcessamento(h.getId(), dataFolha, bruto > 0);
+		for (EmpregadoHorista horista : horistas) {
+			double bruto = horista.calcularSalarioBruto(dataFolha, obterDataInicioPeriodo(horista, dataFolha));
+			historicoPagamentos.registrarProcessamento(horista.getId(), dataFolha, bruto > 0);
 		}
-		for (EmpregadoComissionado c : comissionados) {
-			historicoPagamentos.registrarProcessamento(c.getId(), dataFolha, true);
+		for (EmpregadoComissionado comissionado : comissionados) {
+			historicoPagamentos.registrarProcessamento(comissionado.getId(), dataFolha, true);
 		}
-		for (EmpregadoAssalariado a : assalariados) {
-			historicoPagamentos.registrarProcessamento(a.getId(), dataFolha, true);
-		}
-	}
-
-	private String formatarMetodo(Empregado emp) {
-		String metodo = emp.getMetodoPagamento();
-		if (metodo.equals("emMaos")) return "Em maos";
-		if (metodo.equals("correios")) return "Correios, " + emp.getEndereco();
-		if (metodo.equals("banco")) {
-			return String.format("%s, Ag. %s CC %s", emp.getBanco(), emp.getAgencia(), emp.getContaCorrente());
-		}
-		return metodo;
-	}
-
-	private LocalDate converterData(String data, String mensagemErro) throws Exception {
-		try {
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(java.time.format.ResolverStyle.STRICT);
-			return LocalDate.parse(data, formatter);
-		} catch (DateTimeParseException e) {
-			throw new Exception(mensagemErro);
+		for (EmpregadoAssalariado assalariado : assalariados) {
+			historicoPagamentos.registrarProcessamento(assalariado.getId(), dataFolha, true);
 		}
 	}
 
-	private double arredondar(double valor) {
-		return BigDecimal.valueOf(valor).setScale(2, RoundingMode.HALF_UP).doubleValue();
-	}
-
-	private double truncar(double valor) {
-		return BigDecimal.valueOf(valor).setScale(2, RoundingMode.DOWN).doubleValue();
-	}
-
-	private String formatarMonetario(double valor) {
-		return String.format("%.2f", valor).replace(".", ",");
-	}
-
-	private boolean isDiaDePagamento(Empregado emp, LocalDate data) {
-		return RepositoryAgendas.isDiaDePagamento(emp.getAgendaPagamento(), data);
-	}
-
-	private LocalDate obterDataInicioPeriodo(Empregado emp, LocalDate dataFolha) {
-		LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(emp.getId());
+	private LocalDate obterDataInicioPeriodo(Empregado empregado, LocalDate dataFolha) {
+		LocalDate ultimoProc = historicoPagamentos.getUltimoProcessamento(empregado.getId());
 		LocalDate inicioAgenda;
-		String agenda = emp.getAgendaPagamento();
+		String agenda = empregado.getAgendaPagamento();
 		if (agenda.startsWith("semanal")) {
 			int k = RepositoryAgendas.getSemanas(agenda);
 			inicioAgenda = dataFolha.minusWeeks(k);
 		} else if (agenda.startsWith("mensal")) {
 			String[] partes = agenda.split("\\s+");
 			if (partes.length == 2 && partes[1].equals("$")) {
-				LocalDate prevMonth = dataFolha.minusMonths(1);
-				inicioAgenda = prevMonth.with(TemporalAdjusters.lastDayOfMonth());
+				LocalDate mesAnterior = dataFolha.minusMonths(1);
+				inicioAgenda = mesAnterior.with(TemporalAdjusters.lastDayOfMonth());
 				while (inicioAgenda.getDayOfWeek() == DayOfWeek.SATURDAY || inicioAgenda.getDayOfWeek() == DayOfWeek.SUNDAY) {
 					inicioAgenda = inicioAgenda.minusDays(1);
 				}
@@ -313,74 +272,20 @@ public class ProcessadorFolhaPagamento {
 		return inicioAgenda;
 	}
 
-	private double[] obterHoras(Empregado emp, LocalDate dataFolha) {
-		double hNormais = 0.0;
-		double hExtras = 0.0;
-		if (emp instanceof EmpregadoHorista) {
-			LocalDate inicioPeriodo = obterDataInicioPeriodo(emp, dataFolha);
-			for (CartaoDePonto c : ((EmpregadoHorista) emp).getCartoesDePonto()) {
-				if (!c.getData().isAfter(dataFolha) && c.getData().isAfter(inicioPeriodo)) {
-					hNormais += Math.min(8.0, c.getHoras());
-					if (c.getHoras() > 8.0) hExtras += (c.getHoras() - 8.0);
-				}
-			}
-		}
-		return new double[]{hNormais, hExtras};
-	}
-
-	private double calcularSalarioFixo(EmpregadoComissionado c) {
-		String agenda = c.getAgendaPagamento();
-		if (agenda.startsWith("mensal")) {
-			return c.getSalarioMensal();
-		}
-		int k = RepositoryAgendas.getSemanas(agenda);
-		return truncar((c.getSalarioMensal() * 12.0 * k) / 52.0);
-	}
-
-	private double calcularSalarioBruto(Empregado emp, LocalDate dataFolha) {
-		double bruto = 0.0;
-		if (emp instanceof EmpregadoHorista) {
-			EmpregadoHorista h = (EmpregadoHorista) emp;
-			double[] horas = obterHoras(h, dataFolha);
-			bruto = (horas[0] * h.getSalarioPorHora()) + (horas[1] * h.getSalarioPorHora() * 1.5);
-		} else if (emp instanceof EmpregadoComissionado) {
-			EmpregadoComissionado c = (EmpregadoComissionado) emp;
-			double fixo = calcularSalarioFixo(c);
-			double vendas = 0.0;
-			LocalDate inicioPeriodo = obterDataInicioPeriodo(c, dataFolha);
-			for (ResultadoVenda v : c.getHistoricoVendas()) {
-				if (!v.getData().isAfter(dataFolha) && v.getData().isAfter(inicioPeriodo)) {
-					vendas += v.getValor();
-				}
-			}
-			double comissaoValor = truncar(arredondar(vendas) * c.getTaxaComissao());
-			bruto = fixo + comissaoValor;
-		} else if (emp instanceof EmpregadoAssalariado) {
-			EmpregadoAssalariado a = (EmpregadoAssalariado) emp;
-			String agenda = a.getAgendaPagamento();
-			if (agenda.startsWith("mensal")) {
-				bruto = a.getSalarioMensal();
-			} else {
-				int k = RepositoryAgendas.getSemanas(agenda);
-				bruto = truncar((a.getSalarioMensal() * 12.0 * k) / 52.0);
-			}
-		}
-		return bruto;
-	}
-
-	private double calcularDescontos(Empregado emp, LocalDate dataFolha) {
+	private double calcularDescontos(Empregado empregado, LocalDate dataFolha) {
 		double descontos = 0.0;
-		if (emp.isSindicalizado()) {
-			double bruto = calcularSalarioBruto(emp, dataFolha);
+		if (empregado.isSindicalizado()) {
+			LocalDate inicioPeriodo = obterDataInicioPeriodo(empregado, dataFolha);
+			double bruto = empregado.calcularSalarioBruto(dataFolha, inicioPeriodo);
 			if (bruto > 0) {
 				long diasPeriodo;
-				String agenda = emp.getAgendaPagamento();
+				String agenda = empregado.getAgendaPagamento();
 				if (agenda.startsWith("mensal")) {
 					diasPeriodo = dataFolha.lengthOfMonth();
 				} else {
 					int k = RepositoryAgendas.getSemanas(agenda);
-					if (emp instanceof EmpregadoHorista) {
-						LocalDate ultimo = historicoPagamentos.getUltimoPagamento(emp.getId());
+					if (empregado instanceof EmpregadoHorista) {
+						LocalDate ultimo = historicoPagamentos.getUltimoPagamento(empregado.getId());
 						if (ultimo != null && !ultimo.equals(dataFolha)) {
 							diasPeriodo = ChronoUnit.DAYS.between(ultimo, dataFolha);
 						} else {
@@ -390,14 +295,9 @@ public class ProcessadorFolhaPagamento {
 						diasPeriodo = 7L * k;
 					}
 				}
-				descontos += (emp.getTaxaSindical() * diasPeriodo);
+				descontos += (empregado.getTaxaSindical() * diasPeriodo);
 			}
-			LocalDate inicioPeriodo = obterDataInicioPeriodo(emp, dataFolha);
-			for (TaxaServico t : emp.getTaxasServico()) {
-				if (!t.getData().isAfter(dataFolha) && t.getData().isAfter(inicioPeriodo)) {
-					descontos += t.getValor();
-				}
-			}
+			descontos += empregado.totalTaxasServicoNoPeriodo(inicioPeriodo, dataFolha);
 		}
 		return descontos;
 	}

@@ -55,6 +55,36 @@ public class EmpregadoHorista extends Empregado implements Serializable {
 	}
 
 	@Override
+	public double getSalario() {
+		return salarioPorHora;
+	}
+
+	@Override
+	public void setSalario(double salario) {
+		this.salarioPorHora = salario;
+	}
+
+	public double[] obterHorasTrabalhadas(LocalDate inicioPeriodo, LocalDate dataFolha) {
+		double horasNormais = 0.0;
+		double horasExtras = 0.0;
+		for (CartaoDePonto cartao : getCartoesDePonto()) {
+			if (!cartao.getData().isAfter(dataFolha) && cartao.getData().isAfter(inicioPeriodo)) {
+				horasNormais += Math.min(8.0, cartao.getHoras());
+				if (cartao.getHoras() > 8.0) {
+					horasExtras += (cartao.getHoras() - 8.0);
+				}
+			}
+		}
+		return new double[]{horasNormais, horasExtras};
+	}
+
+	@Override
+	public double calcularSalarioBruto(LocalDate dataFolha, LocalDate inicioPeriodo) {
+		double[] horas = obterHorasTrabalhadas(inicioPeriodo, dataFolha);
+		return (horas[0] * salarioPorHora) + (horas[1] * salarioPorHora * 1.5);
+	}
+
+	@Override
 	public EmpregadoHorista copia() {
 		EmpregadoHorista copia = new EmpregadoHorista(getId(), getNome(), getEndereco(), salarioPorHora);
 		copiarAtributosPara(copia);

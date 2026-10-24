@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
+import br.ufal.ic.p2.wepayu.repositorio.RepositoryAgendas;
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryTaxasServico;
 
 public abstract class Empregado implements Serializable {
@@ -153,6 +154,35 @@ public abstract class Empregado implements Serializable {
 	public double totalTaxasServicoEntre(LocalDate inicio, LocalDate fim) {
 		return taxasServico.totalEntre(inicio, fim);
 	}
+
+	public double totalTaxasServicoNoPeriodo(LocalDate inicioPeriodo, LocalDate dataFolha) {
+		double total = 0.0;
+		for (TaxaServico taxa : getTaxasServico()) {
+			if (!taxa.getData().isAfter(dataFolha) && taxa.getData().isAfter(inicioPeriodo)) {
+				total += taxa.getValor();
+			}
+		}
+		return total;
+	}
+
+	public String getDescricaoMetodoPagamento() {
+		if ("emMaos".equals(metodoPagamento)) return "Em maos";
+		if ("correios".equals(metodoPagamento)) return "Correios, " + getEndereco();
+		if ("banco".equals(metodoPagamento)) {
+			return String.format("%s, Ag. %s CC %s", getBanco(), getAgencia(), getContaCorrente());
+		}
+		return metodoPagamento != null ? metodoPagamento : "";
+	}
+
+	public boolean isDiaDePagamento(LocalDate data) {
+		return RepositoryAgendas.isDiaDePagamento(getAgendaPagamento(), data);
+	}
+
+	public abstract double getSalario();
+
+	public abstract void setSalario(double salario);
+
+	public abstract double calcularSalarioBruto(LocalDate dataFolha, LocalDate inicioPeriodo);
 
 	public abstract Empregado copia();
 

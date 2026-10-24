@@ -72,10 +72,6 @@ public class RepositoryEmpregados implements Serializable {
 		return null;
 	}
 
-	public Empregado getIdEmpregado(String id) {
-		return getEmpregado(id);
-	}
-
 	public Empregado buscarEmpregadoPorNome(String nome, int indice) {
 		int cont = 0;
 		for (Empregado emp : listaEmpregados) {

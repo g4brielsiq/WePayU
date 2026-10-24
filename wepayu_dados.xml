@@ -33,7 +33,7 @@
      <void property="nome">
       <string>Joao da Silva</string>
      </void>
-     <void property="salarioPorHora">
+     <void property="salario">
       <double>23.0</double>
      </void>
     </object>

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import br.ufal.ic.p2.wepayu.repositorio.RepositoryVendas;
+import br.ufal.ic.p2.wepayu.util.FormatoUtil;
 
 public class EmpregadoComissionado extends EmpregadoAssalariado implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -48,6 +49,28 @@ public class EmpregadoComissionado extends EmpregadoAssalariado implements Seria
 
 	public double totalVendasEntre(LocalDate inicio, LocalDate fim) {
 		return historicoVendas.totalEntre(inicio, fim);
+	}
+
+	public double obterTotalVendas(LocalDate inicioPeriodo, LocalDate dataFolha) {
+		double total = 0.0;
+		for (ResultadoVenda venda : getHistoricoVendas()) {
+			if (!venda.getData().isAfter(dataFolha) && venda.getData().isAfter(inicioPeriodo)) {
+				total += venda.getValor();
+			}
+		}
+		return FormatoUtil.arredondar(total);
+	}
+
+	public double obterComissao(LocalDate inicioPeriodo, LocalDate dataFolha) {
+		double vendas = obterTotalVendas(inicioPeriodo, dataFolha);
+		return FormatoUtil.truncar(vendas * taxaComissao);
+	}
+
+	@Override
+	public double calcularSalarioBruto(LocalDate dataFolha, LocalDate inicioPeriodo) {
+		double fixo = calcularSalarioFixo();
+		double comissao = obterComissao(inicioPeriodo, dataFolha);
+		return fixo + comissao;
 	}
 
 	@Override
